@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"server/components/command"
+)
 
 func main() {
-	fmt.Print("Blblblb")
+	_ = command.NewCommand("ECHO ping")
+	cfg := LoadConfig()
+	fmt.Print(cfg.Server.Host)
 }
