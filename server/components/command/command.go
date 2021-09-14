@@ -37,7 +37,7 @@ func TransformExec(exec string) (ExecCommand, error) {
 	return UndefinedCommand, errors.New("cannot recognize execution command")
 }
 
-func NewCommand(command string) Command {
+func NewCommand(command string) (*Command, error) {
 	command = strings.TrimSpace(command) + " "
 
 	commandMatcher, err := regexp.Compile("(.+?) ")
@@ -52,11 +52,11 @@ func NewCommand(command string) Command {
 
 	execute, err := TransformExec(args[0])
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return Command{
+	return &Command{
 		Execute:    execute,
 		Parameters: args[1:],
-	}
+	}, nil
 }
