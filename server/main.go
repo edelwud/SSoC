@@ -1,12 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"server/components/command"
+	s "server/components/server"
 )
 
 func main() {
-	_, _ = command.NewCommand("ECHO ping")
 	cfg := LoadConfig()
-	fmt.Print(cfg.Server.Host)
+
+	server := s.CreateTCPServer(s.Options{Host: cfg.Server.Host, Port: cfg.Server.Port})
+	err := server.Open()
+	if err != nil {
+		panic(err)
+	}
+
+	defer server.Close()
 }
