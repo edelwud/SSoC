@@ -37,7 +37,7 @@ func TransformExec(exec string) (ExecCommand, error) {
 	return UndefinedCommand, errors.New("cannot recognize execution command")
 }
 
-func NewCommand(command string) (*Command, error) {
+func ParseCommand(command string) (*Command, error) {
 	command = strings.TrimSpace(command) + " "
 
 	commandMatcher, err := regexp.Compile("(.+?) ")
