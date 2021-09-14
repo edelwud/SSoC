@@ -1,7 +1,7 @@
 package server
 
 type Server interface {
-	Open() error
+	Run() error
 	Close() error
 }
 

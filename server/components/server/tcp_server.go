@@ -15,9 +15,9 @@ type TcpServer struct {
 	Session  SessionStorage
 }
 
-func (s *TcpServer) Open() error {
+func (s *TcpServer) Run() error {
 	var err error
-	s.Listener, err = net.Listen("tcp", ":"+s.Port)
+	s.Listener, err = net.Listen("tcp", s.Host+":"+s.Port)
 	if err != nil {
 		return err
 	}
