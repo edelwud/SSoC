@@ -42,7 +42,7 @@ func NewCommand(command string) (*Command, error) {
 
 	commandMatcher, err := regexp.Compile("(.+?) ")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	args := commandMatcher.FindAllString(command, MaxParametersCount)
