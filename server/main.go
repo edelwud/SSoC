@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	_ = command.NewCommand("ECHO ping")
+	_, _ = command.NewCommand("ECHO ping")
 	cfg := LoadConfig()
 	fmt.Print(cfg.Server.Host)
 }
