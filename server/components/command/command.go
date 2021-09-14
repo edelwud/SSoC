@@ -53,6 +53,10 @@ func ParseCommand(command string) (*Command, error) {
 		args[i] = strings.TrimSpace(args[i])
 	}
 
+	if len(args) == 0 {
+		return nil, errors.New("command for execution not found")
+	}
+
 	execute, err := TransformExec(args[0])
 	if err != nil {
 		return nil, err

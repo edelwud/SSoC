@@ -2,8 +2,10 @@ package server
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net"
+	"server/components/command"
 	"strings"
 	"time"
 )
@@ -42,24 +44,48 @@ func (s *TcpServer) AcceptLoop() error {
 
 func (s *TcpServer) HandleConnection(conn net.Conn) {
 	for {
-		netData, err := bufio.NewReader(conn).ReadString('\n')
+		userCommand, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if strings.TrimSpace(string(netData)) == "STOP" {
-			fmt.Println("Exiting TCP server!")
-			return
+
+		cmd, err := command.ParseCommand(userCommand)
+		if err != nil {
+			fmt.Println(err)
+			continue
 		}
 
-		fmt.Print("-> ", string(netData))
-		t := time.Now()
-		myTime := t.Format(time.RFC3339) + "\n"
-		_, err = conn.Write([]byte(myTime))
+		err = s.ExecuteCommand(conn, cmd)
 		if err != nil {
-			fmt.Println("kekw")
+			fmt.Println(err)
+			return
 		}
 	}
+}
+
+func (s *TcpServer) ExecuteCommand(conn net.Conn, cmd *command.Command) error {
+	switch cmd.Execute {
+	case command.EchoExec:
+		_, err := conn.Write([]byte(strings.Join(cmd.Parameters, "") + "\n"))
+		if err != nil {
+			return err
+		}
+	case command.TimeExec:
+		t := time.Now()
+		now := t.Format(time.RFC3339) + "\n"
+		_, err := conn.Write([]byte(now))
+		if err != nil {
+			return err
+		}
+	case command.CloseConnectionExec:
+		err := conn.Close()
+		if err != nil {
+			return err
+		}
+		return errors.New("close connection interrupt")
+	}
+	return nil
 }
 
 func (s *TcpServer) Close() error {
@@ -75,6 +101,6 @@ func (s *TcpServer) Close() error {
 	return nil
 }
 
-func CreateTCPServer(options Options) Server {
+func CreateTcpServer(options Options) Server {
 	return &TcpServer{Host: options.Host, Port: options.Port}
 }
