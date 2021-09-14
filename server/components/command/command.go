@@ -15,6 +15,7 @@ type Command struct {
 
 const (
 	EchoExec ExecCommand = iota
+	TimeExec
 	UploadExec
 	DownloadExec
 	CloseConnectionExec
@@ -27,6 +28,8 @@ func TransformExec(exec string) (ExecCommand, error) {
 	switch exec {
 	case "ECHO":
 		return EchoExec, nil
+	case "TIME":
+		return TimeExec, nil
 	case "UPLOAD":
 		return UploadExec, nil
 	case "DOWNLOAD":
