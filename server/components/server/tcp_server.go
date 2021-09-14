@@ -13,13 +13,17 @@ import (
 type TcpServer struct {
 	Host     string
 	Port     string
-	Listener net.Listener
+	Listener *net.TCPListener
 	Session  SessionStorage
 }
 
 func (s *TcpServer) Run() error {
-	var err error
-	s.Listener, err = net.Listen("tcp", s.Host+":"+s.Port)
+	addr, err := net.ResolveTCPAddr("tcp", s.Host+":"+s.Port)
+	if err != nil {
+		return err
+	}
+
+	s.Listener, err = net.ListenTCP("tcp", addr)
 	if err != nil {
 		return err
 	}
@@ -34,7 +38,21 @@ func (s *TcpServer) Run() error {
 
 func (s *TcpServer) AcceptLoop() error {
 	for {
-		conn, err := s.Listener.Accept()
+		conn, err := s.Listener.AcceptTCP()
+		if err != nil {
+			return err
+		}
+
+		err = conn.SetKeepAlive(true)
+		if err != nil {
+			return err
+		}
+
+		err = conn.SetKeepAlivePeriod(time.Minute)
+		if err != nil {
+			return err
+		}
+
 		if err != nil {
 			return err
 		}
