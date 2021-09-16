@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"os"
 )
 
-const ConfigFilename = "config.yaml"
+var configLogger = logrus.WithField("context", "config")
 
 type Config struct {
 	Server struct {
@@ -14,15 +15,15 @@ type Config struct {
 	} `yaml:"server"`
 }
 
-func LoadConfig() Config {
-	f, err := os.Open(ConfigFilename)
+func LoadConfig(configPath string) (Config, error) {
+	f, err := os.Open(configPath)
 	if err != nil {
 		panic(err)
 	}
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			panic(err)
+			configLogger.Fatalf("cannot close config file: %s", err)
 		}
 	}(f)
 
@@ -30,7 +31,7 @@ func LoadConfig() Config {
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
-	return cfg
+	return cfg, nil
 }

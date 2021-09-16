@@ -3,7 +3,6 @@ package server
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"net"
 	"server/components/command"
 	"strings"
@@ -28,6 +27,8 @@ func (s *TcpServer) Run() error {
 		return err
 	}
 
+	serverLogger.Infof("server started on port %s", s.Port)
+
 	err = s.AcceptLoop()
 	if err != nil {
 		return err
@@ -42,6 +43,8 @@ func (s *TcpServer) AcceptLoop() error {
 		if err != nil {
 			return err
 		}
+
+		serverLogger.Infof("client %s connected", conn.RemoteAddr())
 
 		err = conn.SetKeepAlive(true)
 		if err != nil {
@@ -64,19 +67,23 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 	for {
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
-			fmt.Println(err)
+			serverLogger.Infof("client %s disconnected, reason: %s", conn.RemoteAddr(), err)
 			return
 		}
 
 		cmd, err := command.ParseCommand(userCommand)
 		if err != nil {
-			fmt.Println(err)
+			serverLogger.Warnf("client %s sent undefined command", conn.RemoteAddr())
 			continue
 		}
 
 		err = s.ExecuteCommand(conn, cmd)
 		if err != nil {
-			fmt.Println(err)
+			if err.Error() == "close connection interrupt" {
+				serverLogger.Infof("client %s disconnected, reason: %s", conn.RemoteAddr(), err)
+			} else {
+				serverLogger.Warnf("client %s command execution error: %s", conn.RemoteAddr(), err)
+			}
 			return
 		}
 	}
