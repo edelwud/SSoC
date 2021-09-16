@@ -10,14 +10,13 @@ import (
 )
 
 type TcpServer struct {
-	Host     string
-	Port     string
+	Options  Options
 	Listener *net.TCPListener
 	Session  SessionStorage
 }
 
 func (s *TcpServer) Run() error {
-	addr, err := net.ResolveTCPAddr("tcp", s.Host+":"+s.Port)
+	addr, err := net.ResolveTCPAddr("tcp", s.Options.Host+":"+s.Options.Port)
 	if err != nil {
 		return err
 	}
@@ -27,7 +26,7 @@ func (s *TcpServer) Run() error {
 		return err
 	}
 
-	serverLogger.Infof("server started on port %s", s.Port)
+	serverLogger.Infof("server started on port %s", s.Options.Port)
 
 	err = s.AcceptLoop()
 	if err != nil {
@@ -48,12 +47,12 @@ func (s *TcpServer) AcceptLoop() error {
 
 		connectionLogger.Info("connected")
 
-		err = conn.SetKeepAlive(true)
+		err = conn.SetKeepAlive(s.Options.KeepAlive)
 		if err != nil {
 			return err
 		}
 
-		err = conn.SetKeepAlivePeriod(time.Minute)
+		err = conn.SetKeepAlivePeriod(time.Second * time.Duration(s.Options.KeepAlivePeriod))
 		if err != nil {
 			return err
 		}
@@ -131,5 +130,5 @@ func (s *TcpServer) Close() error {
 }
 
 func CreateTcpServer(options Options) Server {
-	return &TcpServer{Host: options.Host, Port: options.Port}
+	return &TcpServer{Options: options}
 }

@@ -1,3 +1,4 @@
-server:
-  host: localhost
-  port: 8080
+host: localhost
+port: 8080
+keepAlive: true
+keepAlivePeriod: 60

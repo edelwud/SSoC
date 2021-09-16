@@ -10,14 +10,14 @@ const ConfigFilename = "config.yaml"
 var topLevelLogger = logrus.WithField("context", "main")
 
 func main() {
-	cfg, err := LoadConfig(ConfigFilename)
+	cfg, err := LoadServerConfig(ConfigFilename)
 	if err != nil {
 		topLevelLogger.Fatalf("cannot read config: %s", err)
 	}
 
 	topLevelLogger.Infof("config loaded: %+v", cfg)
 
-	server := s.CreateTcpServer(s.Options{Host: cfg.Server.Host, Port: cfg.Server.Port})
+	server := s.CreateTcpServer(cfg)
 	err = server.Run()
 	if err != nil {
 		topLevelLogger.Fatalf("server running error: %s", err)

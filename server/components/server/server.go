@@ -1,6 +1,8 @@
 package server
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+)
 
 type Server interface {
 	Run() error
@@ -8,8 +10,10 @@ type Server interface {
 }
 
 type Options struct {
-	Host string
-	Port string
+	Host            string `yaml:"host"`
+	Port            string `yaml:"port"`
+	KeepAlive       bool   `yaml:"keepAlive"`
+	KeepAlivePeriod int    `yaml:"keepAlivePeriod"`
 }
 
 var serverLogger = logrus.WithField("context", "server")
