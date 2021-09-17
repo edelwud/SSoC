@@ -2,17 +2,18 @@ package server
 
 import (
 	"bufio"
-	"errors"
 	"net"
 	"server/components/command"
-	"strings"
+	"server/components/executor"
+	"server/components/session"
 	"time"
 )
 
 type TcpServer struct {
-	Options  Options
-	Listener *net.TCPListener
-	Session  SessionStorage
+	Options     Options
+	Listener    *net.TCPListener
+	Context     session.SessionStorage
+	ExecService executor.ExecService
 }
 
 func (s *TcpServer) Run() error {
@@ -43,8 +44,9 @@ func (s *TcpServer) AcceptLoop() error {
 			return err
 		}
 
-		connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
+		s.Context.Register(conn.RemoteAddr().String(), conn)
 
+		connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 		connectionLogger.Info("connected")
 
 		err = conn.SetKeepAlive(s.Options.KeepAlive)
@@ -57,17 +59,21 @@ func (s *TcpServer) AcceptLoop() error {
 			return err
 		}
 
-		if err != nil {
-			return err
-		}
 		go s.HandleConnection(conn)
 	}
 }
 
 func (s *TcpServer) HandleConnection(conn net.Conn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
+	remoteAddr := conn.RemoteAddr().String()
 
 	for {
+		conn, err := s.Context.Find(remoteAddr)
+		if err != nil {
+			connectionLogger.Infof("disconnected, reason: %s", err)
+			return
+		}
+
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
 			connectionLogger.Infof("disconnected, reason: %s", err)
@@ -80,40 +86,12 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 			continue
 		}
 
-		err = s.ExecuteCommand(conn, cmd)
+		err = s.ExecService.Process(remoteAddr, cmd)
 		if err != nil {
-			if err.Error() == "close connection interrupt" {
-				connectionLogger.Infof("disconnected, reason: %s", err)
-			} else {
-				connectionLogger.Warnf("command execution error: %s", err)
-			}
-			return
+			connectionLogger.Warnf("command execution error: %s", err)
+			continue
 		}
 	}
-}
-
-func (s *TcpServer) ExecuteCommand(conn net.Conn, cmd *command.Command) error {
-	switch cmd.Execute {
-	case command.EchoExec:
-		_, err := conn.Write([]byte(strings.Join(cmd.Parameters, "") + "\n"))
-		if err != nil {
-			return err
-		}
-	case command.TimeExec:
-		t := time.Now()
-		now := t.Format(time.RFC3339) + "\n"
-		_, err := conn.Write([]byte(now))
-		if err != nil {
-			return err
-		}
-	case command.CloseConnectionExec:
-		err := conn.Close()
-		if err != nil {
-			return err
-		}
-		return errors.New("close connection interrupt")
-	}
-	return nil
 }
 
 func (s *TcpServer) Close() error {
@@ -130,5 +108,7 @@ func (s *TcpServer) Close() error {
 }
 
 func CreateTcpServer(options Options) Server {
-	return &TcpServer{Options: options}
+	ctx := session.CreateBasicSessionStorage()
+	executorService := executor.RegisterExecutorService(ctx)
+	return &TcpServer{Options: options, Context: ctx, ExecService: executorService}
 }

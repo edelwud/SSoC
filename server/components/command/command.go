@@ -6,46 +6,19 @@ import (
 	"strings"
 )
 
-type ExecCommand int64
-
 type Command struct {
-	Execute    ExecCommand
+	Cmd        string
 	Parameters []string
 }
 
-const (
-	EchoExec ExecCommand = iota
-	TimeExec
-	UploadExec
-	DownloadExec
-	CloseConnectionExec
-	UndefinedCommand
-)
-
 const MaxParametersCount = 100
 
-func TransformExec(exec string) (ExecCommand, error) {
-	switch exec {
-	case "ECHO":
-		return EchoExec, nil
-	case "TIME":
-		return TimeExec, nil
-	case "UPLOAD":
-		return UploadExec, nil
-	case "DOWNLOAD":
-		return DownloadExec, nil
-	case "CLOSE":
-		return CloseConnectionExec, nil
-	}
-	return UndefinedCommand, errors.New("cannot recognize execution command")
-}
-
-func ParseCommand(command string) (*Command, error) {
+func ParseCommand(command string) (Command, error) {
 	command = strings.TrimSpace(command) + " "
 
 	commandMatcher, err := regexp.Compile("(.+?) ")
 	if err != nil {
-		return nil, err
+		return Command{}, err
 	}
 
 	args := commandMatcher.FindAllString(command, MaxParametersCount)
@@ -54,16 +27,11 @@ func ParseCommand(command string) (*Command, error) {
 	}
 
 	if len(args) == 0 {
-		return nil, errors.New("command for execution not found")
+		return Command{}, errors.New("command for execution not found")
 	}
 
-	execute, err := TransformExec(args[0])
-	if err != nil {
-		return nil, err
-	}
-
-	return &Command{
-		Execute:    execute,
+	return Command{
+		Cmd:        args[0],
 		Parameters: args[1:],
 	}, nil
 }

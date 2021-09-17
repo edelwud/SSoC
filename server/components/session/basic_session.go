@@ -1,13 +1,20 @@
-package server
+package session
 
-import "net"
+import (
+	"errors"
+	"net"
+)
 
 type BasicSessionStorage struct {
 	clients map[string]net.Conn
 }
 
-func (s BasicSessionStorage) Find(host string) net.Conn {
-	return s.clients[host]
+func (s BasicSessionStorage) Find(host string) (net.Conn, error) {
+	conn := s.clients[host]
+	if conn == nil {
+		return nil, errors.New("client not found")
+	}
+	return conn, nil
 }
 
 func (s *BasicSessionStorage) Register(host string, conn net.Conn) {
@@ -24,9 +31,13 @@ func (s *BasicSessionStorage) Deregister(host string) error {
 		return err
 	}
 
+	s.clients[host] = nil
+
 	return nil
 }
 
 func CreateBasicSessionStorage() SessionStorage {
-	return &BasicSessionStorage{}
+	session := &BasicSessionStorage{}
+	session.clients = map[string]net.Conn{}
+	return session
 }
