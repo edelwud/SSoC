@@ -91,6 +91,8 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 			connectionLogger.Warnf("command execution error: %s", err)
 			continue
 		}
+
+		connectionLogger.Infof("command %s successfully executed", cmd.Cmd)
 	}
 }
 
