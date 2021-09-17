@@ -44,8 +44,6 @@ func (s *TcpServer) AcceptLoop() error {
 			return err
 		}
 
-		s.Context.Register(conn.RemoteAddr().String(), conn)
-
 		connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 		connectionLogger.Info("connected")
 
@@ -65,15 +63,11 @@ func (s *TcpServer) AcceptLoop() error {
 
 func (s *TcpServer) HandleConnection(conn net.Conn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
-	remoteAddr := conn.RemoteAddr().String()
+
+	accessToken := ""
+	currentSession := session.CreateBasicSession(conn, accessToken)
 
 	for {
-		conn, err := s.Context.Find(remoteAddr)
-		if err != nil {
-			connectionLogger.Infof("disconnected, reason: %s", err)
-			return
-		}
-
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
 			connectionLogger.Infof("disconnected, reason: %s", err)
@@ -86,7 +80,7 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 			continue
 		}
 
-		err = s.ExecService.Process(remoteAddr, cmd)
+		err = s.ExecService.Process(currentSession, cmd)
 		if err != nil {
 			connectionLogger.Warnf("command execution error: %s", err)
 			continue
@@ -111,6 +105,6 @@ func (s *TcpServer) Close() error {
 
 func CreateTcpServer(options Options) Server {
 	ctx := session.CreateBasicSessionStorage()
-	executorService := executor.RegisterExecutorService(ctx)
+	executorService := executor.RegisterBasicExecutorService(ctx)
 	return &TcpServer{Options: options, Context: ctx, ExecService: executorService}
 }
