@@ -1,43 +1,41 @@
 package session
 
-import (
-	"errors"
-	"net"
-)
+import "net"
 
-type BasicSessionStorage struct {
-	clients map[string]net.Conn
+type BasicSession struct {
+	Conn        net.Conn
+	AccessToken string
 }
 
-func (s BasicSessionStorage) Find(host string) (net.Conn, error) {
-	conn := s.clients[host]
-	if conn == nil {
-		return nil, errors.New("client not found")
-	}
-	return conn, nil
-}
-
-func (s *BasicSessionStorage) Register(host string, conn net.Conn) {
-	s.clients[host] = conn
-}
-
-func (s *BasicSessionStorage) Deregister(host string) error {
-	if s.clients[host] == nil {
+func (s BasicSession) Release() error {
+	if s.Conn == nil {
 		return nil
 	}
 
-	err := s.clients[host].Close()
+	err := s.Conn.Close()
 	if err != nil {
 		return err
 	}
 
-	s.clients[host] = nil
-
 	return nil
 }
 
-func CreateBasicSessionStorage() SessionStorage {
-	session := &BasicSessionStorage{}
-	session.clients = map[string]net.Conn{}
-	return session
+func (s BasicSession) GetConn() net.Conn {
+	return s.Conn
+}
+
+func (s *BasicSession) SetConn(conn net.Conn) {
+	s.Conn = conn
+}
+
+func (s BasicSession) GetAccessToken() string {
+	return s.AccessToken
+}
+
+func (s *BasicSession) SetAccessToken(token string) {
+	s.AccessToken = token
+}
+
+func CreateBasicSession(conn net.Conn, accessToken string) Session {
+	return &BasicSession{Conn: conn, AccessToken: accessToken}
 }

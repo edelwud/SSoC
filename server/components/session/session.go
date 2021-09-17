@@ -2,8 +2,10 @@ package session
 
 import "net"
 
-type SessionStorage interface {
-	Find(host string) (net.Conn, error)
-	Register(host string, conn net.Conn)
-	Deregister(host string) error
+type Session interface {
+	Release() error
+	GetConn() net.Conn
+	SetConn(conn net.Conn)
+	GetAccessToken() string
+	SetAccessToken(token string)
 }
