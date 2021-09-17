@@ -9,13 +9,20 @@ type TimeExecutor struct {
 	ctx session.SessionStorage
 }
 
-func (e TimeExecutor) Process(remoteAddr string, _ ...string) error {
-	conn, err := e.ctx.Find(remoteAddr)
+func (e TimeExecutor) CanAccess(accessToken string) bool {
+	if accessToken == "" {
+		return false
+	}
+	return true
+}
+
+func (e TimeExecutor) Process(session session.Session, _ ...string) error {
+	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Write([]byte(time.Now().String() + "\n"))
+	_, err = s.GetConn().Write([]byte(time.Now().String() + "\n"))
 	if err != nil {
 		return err
 	}

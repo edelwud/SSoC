@@ -8,8 +8,15 @@ type CloseExecutor struct {
 	ctx session.SessionStorage
 }
 
-func (e CloseExecutor) Process(remoteAddr string, params ...string) error {
-	err := e.ctx.Deregister(remoteAddr)
+func (e CloseExecutor) CanAccess(accessToken string) bool {
+	if accessToken == "" {
+		return false
+	}
+	return true
+}
+
+func (e CloseExecutor) Process(session session.Session, _ ...string) error {
+	err := e.ctx.Deregister(session.GetAccessToken())
 	if err != nil {
 		return err
 	}

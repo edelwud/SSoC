@@ -9,13 +9,20 @@ type EchoExecutor struct {
 	ctx session.SessionStorage
 }
 
-func (e EchoExecutor) Process(remoteAddr string, params ...string) error {
-	conn, err := e.ctx.Find(remoteAddr)
+func (e EchoExecutor) CanAccess(accessToken string) bool {
+	if accessToken == "" {
+		return false
+	}
+	return true
+}
+
+func (e EchoExecutor) Process(session session.Session, params ...string) error {
+	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Write([]byte(strings.Join(params, " ") + "\n"))
+	_, err = s.GetConn().Write([]byte(strings.Join(params, " ") + "\n"))
 	if err != nil {
 		return err
 	}
