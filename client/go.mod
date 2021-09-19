@@ -2,7 +2,11 @@ module main
 
 go 1.17
 
-require github.com/AllenDang/giu v0.5.6
+require (
+	github.com/AllenDang/giu v0.5.6
+	github.com/sirupsen/logrus v1.8.1
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+)
 
 require (
 	github.com/AllenDang/go-findfont v0.0.0-20200702051237-9f180485aeb8 // indirect
@@ -13,4 +17,5 @@ require (
 	github.com/go-resty/resty/v2 v2.3.0 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
 	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
 )
