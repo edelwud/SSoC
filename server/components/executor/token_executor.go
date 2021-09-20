@@ -2,6 +2,7 @@ package executor
 
 import (
 	"server/components/session"
+	t "server/components/token"
 )
 
 type TokenExecutor struct {
@@ -14,6 +15,16 @@ func (e TokenExecutor) CanAccess(_ string) bool {
 
 func (e TokenExecutor) Process(session session.Session, params ...string) error {
 	token := params[0]
+
+	payload, err := t.ParseToken([]byte(token))
+	if err != nil {
+		return err
+	}
+
+	err = t.ValidateToken(payload)
+	if err != nil {
+		return err
+	}
 
 	if _, err := e.ctx.Find(token); err == nil {
 		err := e.ctx.Deregister(token)
