@@ -30,5 +30,6 @@ func RegisterBasicExecutorService(ctx session.SessionStorage) ExecService {
 	execService.serviceSet["ECHO"] = createEchoExecutor(ctx)
 	execService.serviceSet["CLOSE"] = createCloseExecutor(ctx)
 	execService.serviceSet["TOKEN"] = createTokenExecutor(ctx)
+	execService.serviceSet["UPLOAD"] = createUploadExecutor(ctx)
 	return execService
 }
