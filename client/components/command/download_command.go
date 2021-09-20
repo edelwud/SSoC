@@ -1,31 +1,35 @@
-package executor
+package command
 
 import (
 	"bufio"
+	"main/components/session"
 	"math/rand"
 	"net"
 	"os"
-	"server/components/session"
 	"strconv"
 	"time"
 )
 
-const DownloadFolder = "files/uploads"
-
-type DownloadExecutor struct {
-	bufferSize int
-	ctx        session.SessionStorage
+type DownloadCommand struct {
+	Cmd      string
+	Filename string
 }
 
-func (e DownloadExecutor) CanAccess(accessToken string) bool {
-	if accessToken == "" {
-		return false
-	}
-	return true
+const DownloadFolder = "files/downloads"
+
+var dataChannelReady = make(chan bool, 10)
+
+func GeneratePort() string {
+	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
 }
 
-func (e DownloadExecutor) CreateDatachannel(port string, filename string) (int, error) {
-	fileHandler, err := os.Create(UploadFolder + "/" + filename)
+func (c DownloadCommand) Row() []byte {
+	result := []byte(c.Cmd + " " + c.Filename + "\n")
+	return result
+}
+
+func (c DownloadCommand) CreateDatachannel(port string, filename string) (int, error) {
+	fileHandler, err := os.Create(DownloadFolder + "/" + filename)
 	if err != nil {
 		return 0, err
 	}
@@ -98,42 +102,45 @@ func (e DownloadExecutor) CreateDatachannel(port string, filename string) (int, 
 	return int(n), nil
 }
 
-func (e DownloadExecutor) Process(session session.Session, params ...string) error {
-	s, err := e.ctx.Find(session.GetAccessToken())
+func (c DownloadCommand) Process(ctx session.Session) error {
+	download := ctx.RegisterDownload()
+	download.Filename = c.Filename
+	download.StartTime = time.Now()
+
+	_, err := ctx.GetConn().Write(c.Row())
 	if err != nil {
 		return err
 	}
-
-	file := s.RegisterUpload()
-	file.Filename = params[0]
-	file.StartTime = time.Now()
 
 	port := GeneratePort()
 
 	go func() {
 		<-dataChannelReady
-		_, err = s.GetConn().Write([]byte(port + "\n"))
+		_, err = ctx.GetConn().Write([]byte(port + "\n"))
 		if err != nil {
 			return
 		}
 	}()
 
-	n, err := e.CreateDatachannel(port, file.Filename)
+	n, err := c.CreateDatachannel(port, c.Filename)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.GetConn().Write([]byte("RECEIVED\n"))
+	_, err = bufio.NewReader(ctx.GetConn()).ReadString('\n')
 	if err != nil {
 		return err
 	}
 
-	file.Transferred = n
-	file.EndTime = time.Now()
+	download.Transferred = n
+	download.EndTime = time.Now()
 
 	return nil
 }
 
-func createDownloadExecutor(ctx session.SessionStorage) Executor {
-	return &DownloadExecutor{ctx: ctx}
+func CreateDownloadCommand(filename string) Command {
+	return &DownloadCommand{
+		Cmd:      "DOWNLOAD",
+		Filename: filename,
+	}
 }

@@ -46,6 +46,7 @@ func main() {
 	w := a.NewWindow("TCP client")
 
 	echoEntry := widget.NewMultiLineEntry()
+	downloadFilename := widget.NewEntry()
 	echoResult := widget.NewLabel("Result: ")
 	currentTime := widget.NewLabel("Result: ")
 
@@ -109,8 +110,8 @@ func main() {
 						}
 
 						cmd := command.CreateUploadCommand(reader.URI().Name(), reader.URI().Path())
-						err = tcpClient.Exec(cmd)
 
+						err = tcpClient.Exec(cmd)
 						if err != nil {
 							topLevelLogger.Fatalf("cannot execute upload command: %s", err)
 						}
@@ -122,6 +123,16 @@ func main() {
 
 						topLevelLogger.Infof("spend %d seconds for uploading file %s, bitrate %d", file.Duration(), file.Filename, file.Bitrate())
 					}, w)
+				}),
+			)),
+			container.NewTabItem("DOWNLOAD", container.NewVBox(
+				downloadFilename,
+				widget.NewButton("Download file", func() {
+					cmd := command.CreateDownloadCommand(downloadFilename.Text)
+					err := tcpClient.Exec(cmd)
+					if err != nil {
+						topLevelLogger.Fatalf("cannot execute download command: %s", err)
+					}
 				}),
 			)),
 		),
