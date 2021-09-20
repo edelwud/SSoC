@@ -10,4 +10,6 @@ type Session interface {
 	SetAccessToken(token string)
 	RegisterUpload() *File
 	RegisterDownload() *File
+	FindUpload(filename string) *File
+	FindDownload(filename string) *File
 }

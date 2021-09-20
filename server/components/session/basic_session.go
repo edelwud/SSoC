@@ -1,12 +1,8 @@
 package session
 
-import "net"
-
-type File struct {
-	Filename    string
-	Transferred uint
-	Size        uint
-}
+import (
+	"net"
+)
 
 type BasicSession struct {
 	Conn        net.Conn
@@ -44,7 +40,7 @@ func (s *BasicSession) SetAccessToken(token string) {
 	s.AccessToken = token
 }
 
-func (s BasicSession) RegisterUpload() *File {
+func (s *BasicSession) RegisterUpload() *File {
 	file := &File{}
 	s.Uploads = append(s.Uploads, file)
 	return file
@@ -54,6 +50,24 @@ func (s BasicSession) RegisterDownload() *File {
 	file := &File{}
 	s.Downloads = append(s.Downloads, file)
 	return file
+}
+
+func (s BasicSession) FindUpload(filename string) *File {
+	for _, file := range s.Uploads {
+		if file.Filename == filename {
+			return file
+		}
+	}
+	return nil
+}
+
+func (s BasicSession) FindDownload(filename string) *File {
+	for _, file := range s.Downloads {
+		if file.Filename == filename {
+			return file
+		}
+	}
+	return nil
 }
 
 func CreateBasicSession(conn net.Conn, accessToken string) Session {
