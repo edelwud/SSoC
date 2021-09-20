@@ -12,7 +12,11 @@ func (c CloseCommand) Row() []byte {
 	return []byte(c.Cmd + "\n")
 }
 
-func (c CloseCommand) AfterExec(_ session.Session) error {
+func (c CloseCommand) Process(ctx session.Session) error {
+	_, err := ctx.GetConn().Write(c.Row())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

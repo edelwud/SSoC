@@ -12,7 +12,11 @@ func (c TimeCommand) Row() []byte {
 	return []byte(c.Cmd + "\n")
 }
 
-func (c TimeCommand) AfterExec(_ session.Session) error {
+func (c TimeCommand) Process(ctx session.Session) error {
+	_, err := ctx.GetConn().Write(c.Row())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

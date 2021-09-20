@@ -14,7 +14,11 @@ func (c TokenCommand) Row() []byte {
 	return []byte(c.Cmd + " " + c.Token + "\n")
 }
 
-func (c TokenCommand) AfterExec(ctx session.Session) error {
+func (c TokenCommand) Process(ctx session.Session) error {
+	_, err := ctx.GetConn().Write(c.Row())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

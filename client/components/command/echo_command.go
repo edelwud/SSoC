@@ -13,7 +13,11 @@ func (c EchoCommand) Row() []byte {
 	return []byte(c.Cmd + " " + c.Text + "\n")
 }
 
-func (c EchoCommand) AfterExec(_ session.Session) error {
+func (c EchoCommand) Process(ctx session.Session) error {
+	_, err := ctx.GetConn().Write(c.Row())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -4,5 +4,5 @@ import "main/components/session"
 
 type Command interface {
 	Row() []byte
-	AfterExec(ctx session.Session) error
+	Process(ctx session.Session) error
 }
