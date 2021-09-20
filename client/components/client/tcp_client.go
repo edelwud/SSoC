@@ -44,7 +44,7 @@ func (c *TcpClient) Connect() error {
 	return nil
 }
 
-func (c *TcpClient) Auth(conn net.Conn) error {
+func (c *TcpClient) Auth(conn *net.TCPConn) error {
 	macToken, err := token.GenerateMACToken()
 	if err != nil {
 		return err
@@ -81,12 +81,7 @@ func (c TcpClient) Disconnect() error {
 }
 
 func (c TcpClient) Exec(cmd command.Command) error {
-	_, err := c.Session.GetConn().Write(cmd.Row())
-	if err != nil {
-		return err
-	}
-
-	err = cmd.AfterExec(c.Session)
+	err := cmd.Process(c.Session)
 	if err != nil {
 		return err
 	}
