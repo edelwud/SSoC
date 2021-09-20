@@ -8,4 +8,6 @@ type Session interface {
 	SetConn(conn net.Conn)
 	GetAccessToken() string
 	SetAccessToken(token string)
+	RegisterUpload() *File
+	RegisterDownload() *File
 }
