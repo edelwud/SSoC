@@ -1,15 +1,11 @@
 package session
 
-import "net"
-
-type File struct {
-	Filename    string
-	Transferred uint
-	Size        uint
-}
+import (
+	"net"
+)
 
 type BasicSession struct {
-	Conn        net.Conn
+	Conn        *net.TCPConn
 	AccessToken string
 	Uploads     []*File
 	Downloads   []*File
@@ -28,11 +24,11 @@ func (s BasicSession) Release() error {
 	return nil
 }
 
-func (s BasicSession) GetConn() net.Conn {
+func (s BasicSession) GetConn() *net.TCPConn {
 	return s.Conn
 }
 
-func (s *BasicSession) SetConn(conn net.Conn) {
+func (s *BasicSession) SetConn(conn *net.TCPConn) {
 	s.Conn = conn
 }
 
@@ -44,7 +40,7 @@ func (s *BasicSession) SetAccessToken(token string) {
 	s.AccessToken = token
 }
 
-func (s BasicSession) RegisterUpload() *File {
+func (s *BasicSession) RegisterUpload() *File {
 	file := &File{}
 	s.Uploads = append(s.Uploads, file)
 	return file
@@ -56,7 +52,25 @@ func (s BasicSession) RegisterDownload() *File {
 	return file
 }
 
-func CreateBasicSession(conn net.Conn, accessToken string) Session {
+func (s BasicSession) FindUpload(filename string) *File {
+	for _, file := range s.Uploads {
+		if file.Filename == filename {
+			return file
+		}
+	}
+	return nil
+}
+
+func (s BasicSession) FindDownload(filename string) *File {
+	for _, file := range s.Downloads {
+		if file.Filename == filename {
+			return file
+		}
+	}
+	return nil
+}
+
+func CreateBasicSession(conn *net.TCPConn, accessToken string) Session {
 	return &BasicSession{
 		Conn:        conn,
 		AccessToken: accessToken,
