@@ -1,39 +1,61 @@
 package main
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"main/components/client"
 	"main/components/command"
+	"os"
 
 	g "github.com/AllenDang/giu"
 )
 
-const ConfigFilename = "../server/config.yaml"
+const ConfigFilename = "config.yaml"
 
 var (
 	topLevelLogger = logrus.WithField("context", "main")
 	tcpClient      client.Client
+	echoText       string
 )
-
-func onEchoButton() {
-	cmd := command.CreateEchoCommand("KEKW")
-	err := tcpClient.Exec(cmd)
-	if err != nil {
-		topLevelLogger.Fatalf("cannot to exec echo command: %s", err)
-	}
-}
-
-func onTimeButton() {
-	fmt.Println("Im sooooooo cute!!")
-}
 
 func loop() {
 	g.SingleWindow().Layout(
-		g.Label("Hello world from giu"),
+		g.PrepareMsgbox(),
 		g.Row(
-			g.Button("Send echo command").OnClick(onEchoButton),
-			g.Button("Send time command").OnClick(onTimeButton),
+			g.Button("Close connection").Size(g.Auto, 30).OnClick(func() {
+				cmd := command.CreateCloseCommand()
+				err := tcpClient.Exec(cmd)
+				if err != nil {
+					topLevelLogger.Fatalf("cannot disconnect from tcp server: %q", err)
+					g.Msgbox("Error", "Cannot disconnect from tcp server")
+				}
+				os.Exit(0)
+			}),
+		),
+		g.TabBar().TabItems(
+			g.TabItem("ECHO").Layout(
+				g.Label("Text"),
+				g.Row(
+					g.InputTextMultiline(&echoText),
+					g.Button("ECHO").OnClick(func() {
+						cmd := command.CreateEchoCommand(echoText)
+						err := tcpClient.Exec(cmd)
+						if err != nil {
+							topLevelLogger.Fatalf("cannot to exec echo command: %s", err)
+							g.Msgbox("Error", "While execution ECHO command: "+err.Error())
+						}
+					}),
+				),
+			),
+			g.TabItem("TIME").Layout(
+				g.Button("TIME").Size(g.Auto, g.Auto).OnClick(func() {
+					cmd := command.CreateTimeCommand()
+					err := tcpClient.Exec(cmd)
+					if err != nil {
+						topLevelLogger.Fatalf("cannot to exec time command: %s", err)
+						g.Msgbox("Error", "While execution TIME command: "+err.Error())
+					}
+				}),
+			),
 		),
 	)
 }
@@ -60,6 +82,6 @@ func main() {
 		}
 	}(tcpClient)
 
-	wnd := g.NewMasterWindow("Hello world", 400, 200, g.MasterWindowFlagsNotResizable)
+	wnd := g.NewMasterWindow("TCP client", 400, 250, g.MasterWindowFlagsNotResizable)
 	wnd.Run(loop)
 }
