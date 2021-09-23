@@ -2,11 +2,9 @@ package executor
 
 import (
 	"bufio"
-	"math/rand"
 	"net"
 	"os"
 	"server/components/session"
-	"strconv"
 	"time"
 )
 

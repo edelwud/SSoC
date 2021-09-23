@@ -86,8 +86,6 @@ func (c TcpClient) Exec(cmd command.Command) error {
 		return err
 	}
 
-	clientLogger.Info("command executed")
-
 	return nil
 }
 
