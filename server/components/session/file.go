@@ -55,7 +55,7 @@ func (f *File) Write(p []byte) (int, error) {
 }
 
 func CreateFile(filename string, filepath string) (*File, error) {
-	opened, err := os.Create(filepath)
+	opened, err := os.OpenFile(filepath, os.O_CREATE|os.O_RDWR, 0777)
 	if err != nil {
 		return nil, err
 	}

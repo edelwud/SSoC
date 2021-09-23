@@ -1,9 +1,11 @@
 package executor
 
 import (
+	"bufio"
 	"io"
 	"net"
 	"server/components/session"
+	"strings"
 	"time"
 )
 
@@ -22,34 +24,21 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 }
 
 func (e DownloadExecutor) CreateDatachannel(port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
 		return err
 	}
 
-	listener, err := net.ListenTCP("tcp", addr)
-	defer func(listener *net.TCPListener) {
-		err := listener.Close()
-		if err != nil {
-			return
-		}
-	}(listener)
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		return err
 	}
-
-	dataChannelReady <- true
-
-	conn, err := listener.AcceptTCP()
 	defer func(conn *net.TCPConn) {
 		err := conn.Close()
 		if err != nil {
 			return
 		}
 	}(conn)
-	if err != nil {
-		return err
-	}
 
 	err = conn.SetKeepAlive(true)
 	if err != nil {
@@ -61,7 +50,7 @@ func (e DownloadExecutor) CreateDatachannel(port string) error {
 		return err
 	}
 
-	_, err = io.Copy(e.File, conn)
+	_, err = io.Copy(conn, e.File)
 	if err != nil {
 		return err
 	}
@@ -88,15 +77,13 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 		return err
 	}
 
-	port := GeneratePort()
+	port, err := bufio.NewReader(s.GetConn()).ReadString('\n')
+	if err != nil {
+		return err
+	}
 
-	go func() {
-		<-dataChannelReady
-		_, err = s.GetConn().Write([]byte(port + "\n"))
-		if err != nil {
-			return
-		}
-	}()
+	port = strings.Trim(port, "\n")
+	port = strings.Trim(port, " ")
 
 	err = e.CreateDatachannel(port)
 	if err != nil {

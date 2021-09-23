@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type UploadCommand struct {
@@ -38,13 +39,22 @@ func (c UploadCommand) CreateDatachannel(port string) error {
 		}
 	}(conn)
 
-	dataWriter := bufio.NewWriter(conn)
-	_, err = io.Copy(dataWriter, c.File)
+	err = conn.SetKeepAlive(true)
 	if err != nil {
 		return err
 	}
 
-	err = dataWriter.Flush()
+	err = conn.SetKeepAlivePeriod(360 * time.Second)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(conn, c.File)
+	if err != nil {
+		return err
+	}
+
+	err = c.File.Sync()
 	if err != nil {
 		return err
 	}

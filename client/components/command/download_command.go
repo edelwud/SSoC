@@ -1,7 +1,7 @@
 package command
 
 import (
-	"bufio"
+	"io"
 	"main/components/session"
 	"math/rand"
 	"net"
@@ -69,9 +69,7 @@ func (c DownloadCommand) CreateDatachannel(port string) error {
 		return err
 	}
 
-	reader := bufio.NewReader(conn)
-
-	_, err = reader.WriteTo(c.File)
+	_, err = io.Copy(c.File, conn)
 	if err != nil {
 		return err
 	}
@@ -104,11 +102,6 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 	}()
 
 	err = c.CreateDatachannel(port)
-	if err != nil {
-		return err
-	}
-
-	_, err = bufio.NewReader(ctx.GetConn()).ReadString('\n')
 	if err != nil {
 		return err
 	}
