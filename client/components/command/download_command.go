@@ -5,7 +5,6 @@ import (
 	"main/components/session"
 	"math/rand"
 	"net"
-	"os"
 	"strconv"
 	"time"
 )
@@ -13,6 +12,8 @@ import (
 type DownloadCommand struct {
 	Cmd      string
 	Filename string
+	Filepath string
+	File     *session.File
 }
 
 const DownloadFolder = "files/downloads"
@@ -28,86 +29,66 @@ func (c DownloadCommand) Row() []byte {
 	return result
 }
 
-func (c DownloadCommand) CreateDatachannel(port string, filename string) (int, error) {
-	fileHandler, err := os.Create(DownloadFolder + "/" + filename)
-	if err != nil {
-		return 0, err
-	}
-
-	defer func(fileHandler *os.File) {
-		err := fileHandler.Close()
-		if err != nil {
-			return
-		}
-	}(fileHandler)
-
-	writer := bufio.NewWriter(fileHandler)
-
+func (c DownloadCommand) CreateDatachannel(port string) error {
 	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
 	defer func(listener *net.TCPListener) {
 		err := listener.Close()
 		if err != nil {
 			return
 		}
 	}(listener)
-	if err != nil {
-		return 0, err
-	}
 
 	dataChannelReady <- true
 
 	conn, err := listener.AcceptTCP()
+	if err != nil {
+		return err
+	}
 	defer func(conn *net.TCPConn) {
 		err := conn.Close()
 		if err != nil {
 			return
 		}
 	}(conn)
-	if err != nil {
-		return 0, err
-	}
 
 	err = conn.SetKeepAlive(true)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	err = conn.SetKeepAlivePeriod(360 * time.Second)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	reader := bufio.NewReader(conn)
 
-	n, err := reader.WriteTo(writer)
+	_, err = reader.WriteTo(c.File)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = writer.Flush()
+	err = c.File.Sync()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = fileHandler.Sync()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(n), nil
+	return nil
 }
 
 func (c DownloadCommand) Process(ctx session.Session) error {
-	download := ctx.RegisterDownload()
-	download.Filename = c.Filename
-	download.StartTime = time.Now()
+	var err error
+	c.File, err = ctx.RegisterDownload(c.Filename, c.Filepath)
 
-	_, err := ctx.GetConn().Write(c.Row())
+	_, err = ctx.GetConn().Write(c.Row())
 	if err != nil {
 		return err
 	}
@@ -122,7 +103,7 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 		}
 	}()
 
-	n, err := c.CreateDatachannel(port, c.Filename)
+	err = c.CreateDatachannel(port)
 	if err != nil {
 		return err
 	}
@@ -132,8 +113,10 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 		return err
 	}
 
-	download.Transferred = n
-	download.EndTime = time.Now()
+	err = c.File.Close()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -142,5 +125,6 @@ func CreateDownloadCommand(filename string) Command {
 	return &DownloadCommand{
 		Cmd:      "DOWNLOAD",
 		Filename: filename,
+		Filepath: DownloadFolder + "/" + filename,
 	}
 }

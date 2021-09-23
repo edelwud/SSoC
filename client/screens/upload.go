@@ -25,19 +25,24 @@ func getUploadCb(w fyne.Window, client client.Client) func(reader fyne.URIReadCl
 			return
 		}
 
-		cmd := command.CreateUploadCommand(reader.URI().Name(), reader.URI().Path())
+		name, path := reader.URI().Name(), reader.URI().Path()
+		cmd := command.CreateUploadCommand(name, path)
 
 		err = client.Exec(cmd)
 		if err != nil {
 			uploadLogger.Fatalf("cannot execute upload command: %s", err)
 		}
 
-		file := client.GetContext().FindUpload(reader.URI().Name())
+		file := client.GetContext().FindUpload(name)
 		if file == nil {
 			uploadLogger.Fatalf("cannot find uploaded file")
 		}
 
-		uploadLogger.Infof("spend %d nanoseconds for uploading file %s, bitrate %f Mb/s", file.Duration(), file.Filename, file.Bitrate())
+		duration, filename, bitrate := file.Duration(), file.Filename, file.Bitrate()
+		uploadLogger.WithFields(logrus.Fields{
+			"duration (ms)":  duration / 1000000,
+			"bitrate (MB/s)": bitrate,
+		}).Infof("file \"%s\" successfully uploaded", filename)
 	}
 }
 

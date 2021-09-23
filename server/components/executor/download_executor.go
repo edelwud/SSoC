@@ -1,9 +1,8 @@
 package executor
 
 import (
-	"bufio"
+	"io"
 	"net"
-	"os"
 	"server/components/session"
 	"time"
 )
@@ -11,8 +10,8 @@ import (
 const DownloadFolder = "files/uploads"
 
 type DownloadExecutor struct {
-	bufferSize int
-	ctx        session.SessionStorage
+	File *session.File
+	ctx  session.SessionStorage
 }
 
 func (e DownloadExecutor) CanAccess(accessToken string) bool {
@@ -22,24 +21,10 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 	return true
 }
 
-func (e DownloadExecutor) CreateDatachannel(port string, filename string) (int, error) {
-	fileHandler, err := os.Create(UploadFolder + "/" + filename)
-	if err != nil {
-		return 0, err
-	}
-
-	defer func(fileHandler *os.File) {
-		err := fileHandler.Close()
-		if err != nil {
-			return
-		}
-	}(fileHandler)
-
-	writer := bufio.NewWriter(fileHandler)
-
+func (e DownloadExecutor) CreateDatachannel(port string) error {
 	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	listener, err := net.ListenTCP("tcp", addr)
@@ -50,7 +35,7 @@ func (e DownloadExecutor) CreateDatachannel(port string, filename string) (int, 
 		}
 	}(listener)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	dataChannelReady <- true
@@ -63,48 +48,45 @@ func (e DownloadExecutor) CreateDatachannel(port string, filename string) (int, 
 		}
 	}(conn)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	err = conn.SetKeepAlive(true)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	err = conn.SetKeepAlivePeriod(360 * time.Second)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	reader := bufio.NewReader(conn)
-
-	n, err := reader.WriteTo(writer)
+	_, err = io.Copy(e.File, conn)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = writer.Flush()
+	err = e.File.Sync()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = fileHandler.Sync()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(n), nil
+	return nil
 }
 
-func (e DownloadExecutor) Process(session session.Session, params ...string) error {
+func (e *DownloadExecutor) Process(session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	file := s.RegisterUpload()
-	file.Filename = params[0]
-	file.StartTime = time.Now()
+	filename := params[0]
+	filepath := DownloadFolder + "/" + params[0]
+
+	e.File, err = s.RegisterDownload(filename, filepath)
+	if err != nil {
+		return err
+	}
 
 	port := GeneratePort()
 
@@ -116,7 +98,7 @@ func (e DownloadExecutor) Process(session session.Session, params ...string) err
 		}
 	}()
 
-	n, err := e.CreateDatachannel(port, file.Filename)
+	err = e.CreateDatachannel(port)
 	if err != nil {
 		return err
 	}
@@ -126,8 +108,10 @@ func (e DownloadExecutor) Process(session session.Session, params ...string) err
 		return err
 	}
 
-	file.Transferred = n
-	file.EndTime = time.Now()
+	err = e.File.Close()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

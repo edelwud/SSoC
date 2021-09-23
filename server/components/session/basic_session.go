@@ -40,16 +40,22 @@ func (s *BasicSession) SetAccessToken(token string) {
 	s.AccessToken = token
 }
 
-func (s *BasicSession) RegisterUpload() *File {
-	file := &File{}
+func (s *BasicSession) RegisterUpload(filename string, filepath string) (*File, error) {
+	file, err := CreateFile(filename, filepath)
+	if err != nil {
+		return nil, err
+	}
 	s.Uploads = append(s.Uploads, file)
-	return file
+	return file, nil
 }
 
-func (s BasicSession) RegisterDownload() *File {
-	file := &File{}
-	s.Downloads = append(s.Downloads, file)
-	return file
+func (s BasicSession) RegisterDownload(filename string, filepath string) (*File, error) {
+	file, err := CreateFile(filename, filepath)
+	if err != nil {
+		return nil, err
+	}
+	s.Uploads = append(s.Uploads, file)
+	return file, nil
 }
 
 func (s BasicSession) FindUpload(filename string) *File {

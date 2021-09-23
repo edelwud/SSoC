@@ -1,10 +1,9 @@
 package executor
 
 import (
-	"bufio"
+	"io"
 	"math/rand"
 	"net"
-	"os"
 	"server/components/session"
 	"strconv"
 	"time"
@@ -13,8 +12,8 @@ import (
 const UploadFolder = "files/uploads"
 
 type UploadExecutor struct {
-	bufferSize int
-	ctx        session.SessionStorage
+	File *session.File
+	ctx  session.SessionStorage
 }
 
 var dataChannelReady = make(chan bool, 10)
@@ -30,89 +29,72 @@ func GeneratePort() string {
 	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
 }
 
-func (e UploadExecutor) CreateDatachannel(port string, filename string) (int, error) {
-	fileHandler, err := os.Create(UploadFolder + "/" + filename)
-	if err != nil {
-		return 0, err
-	}
-
-	defer func(fileHandler *os.File) {
-		err := fileHandler.Close()
-		if err != nil {
-			return
-		}
-	}(fileHandler)
-
-	writer := bufio.NewWriter(fileHandler)
-
+func (e UploadExecutor) CreateDatachannel(port string) error {
 	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
 	defer func(listener *net.TCPListener) {
 		err := listener.Close()
 		if err != nil {
 			return
 		}
 	}(listener)
-	if err != nil {
-		return 0, err
-	}
 
 	dataChannelReady <- true
 
 	conn, err := listener.AcceptTCP()
+	if err != nil {
+		return err
+	}
 	defer func(conn *net.TCPConn) {
 		err := conn.Close()
 		if err != nil {
 			return
 		}
 	}(conn)
-	if err != nil {
-		return 0, err
-	}
 
 	err = conn.SetKeepAlive(true)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	err = conn.SetKeepAlivePeriod(360 * time.Second)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	reader := bufio.NewReader(conn)
-
-	n, err := reader.WriteTo(writer)
+	_, err = io.Copy(e.File, conn)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = writer.Flush()
+	err = e.File.Sync()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = fileHandler.Sync()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(n), nil
+	return nil
 }
 
-func (e UploadExecutor) Process(session session.Session, params ...string) error {
+func (e *UploadExecutor) Process(session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	file := s.RegisterUpload()
-	file.Filename = params[0]
-	file.StartTime = time.Now()
+	filename := params[0]
+	filepath := UploadFolder + "/" + filename
+
+	e.File, err = s.RegisterUpload(filename, filepath)
+	if err != nil {
+		return err
+	}
 
 	port := GeneratePort()
 
@@ -124,7 +106,7 @@ func (e UploadExecutor) Process(session session.Session, params ...string) error
 		}
 	}()
 
-	n, err := e.CreateDatachannel(port, file.Filename)
+	err = e.CreateDatachannel(port)
 	if err != nil {
 		return err
 	}
@@ -134,8 +116,10 @@ func (e UploadExecutor) Process(session session.Session, params ...string) error
 		return err
 	}
 
-	file.Transferred = n
-	file.EndTime = time.Now()
+	err = e.File.Close()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

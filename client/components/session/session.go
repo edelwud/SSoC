@@ -8,8 +8,8 @@ type Session interface {
 	SetConn(conn *net.TCPConn)
 	GetAccessToken() string
 	SetAccessToken(token string)
-	RegisterUpload() *File
-	RegisterDownload() *File
+	RegisterUpload(filename string, filepath string) (*File, error)
+	RegisterDownload(filename string, filepath string) (*File, error)
 	FindUpload(filename string) *File
 	FindDownload(filename string) *File
 }
