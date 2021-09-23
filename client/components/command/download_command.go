@@ -106,6 +106,11 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 		return err
 	}
 
+	_, err = ctx.GetConn().Write([]byte("RECEIVED\n"))
+	if err != nil {
+		return err
+	}
+
 	err = c.File.Close()
 	if err != nil {
 		return err

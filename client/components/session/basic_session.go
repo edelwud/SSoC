@@ -40,21 +40,32 @@ func (s *BasicSession) SetAccessToken(token string) {
 	s.AccessToken = token
 }
 
-func (s *BasicSession) RegisterUpload(filename string, filepath string) (*File, error) {
-	file, err := CreateFile(filename, filepath)
-	if err != nil {
-		return nil, err
+func (s BasicSession) FreeUpload(filename string) {
+	for i, file := range s.Uploads {
+		if file.Filename == filename {
+			s.Uploads = append(s.Uploads[:i], s.Uploads[i+1:]...)
+		}
 	}
-	s.Uploads = append(s.Uploads, file)
-	return file, nil
 }
 
-func (s BasicSession) RegisterDownload(filename string, filepath string) (*File, error) {
+func (s *BasicSession) RegisterUpload(filename string, filepath string) (*File, error) {
+	s.FreeUpload(filename)
+
+	upload, err := CreateFile(filename, filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Uploads = append(s.Uploads, upload)
+	return upload, nil
+}
+
+func (s *BasicSession) RegisterDownload(filename string, filepath string) (*File, error) {
 	file, err := CreateFile(filename, filepath)
 	if err != nil {
 		return nil, err
 	}
-	s.Uploads = append(s.Uploads, file)
+	s.Downloads = append(s.Downloads, file)
 	return file, nil
 }
 
@@ -74,6 +85,39 @@ func (s BasicSession) FindDownload(filename string) *File {
 		}
 	}
 	return nil
+}
+
+func (s BasicSession) UploadStatus() float64 {
+	summary := float64(0)
+	i := 0
+
+	for _, file := range s.Uploads {
+		if file.Completed() {
+			continue
+		}
+		summary += float64(file.Size) / float64(file.Transferred)
+		i++
+	}
+
+	if i == 0 {
+		return 0
+	}
+
+	return summary / float64(i)
+}
+
+func (s BasicSession) DownloadStatus() float64 {
+	summary := float64(0)
+
+	for _, file := range s.Downloads {
+		summary += float64(file.Size) / float64(file.Transferred)
+	}
+
+	if len(s.Downloads) == 0 {
+		return 0
+	}
+
+	return summary / float64(len(s.Downloads))
 }
 
 func CreateBasicSession(conn *net.TCPConn, accessToken string) Session {

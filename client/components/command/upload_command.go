@@ -101,7 +101,6 @@ func (c *UploadCommand) Process(ctx session.Session) error {
 }
 
 func CreateUploadCommand(filename string, path string) Command {
-
 	return &UploadCommand{
 		Cmd:      "UPLOAD",
 		Filename: filename,

@@ -90,7 +90,7 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 		return err
 	}
 
-	_, err = s.GetConn().Write([]byte("RECEIVED\n"))
+	_, err = bufio.NewReader(s.GetConn()).ReadString('\n')
 	if err != nil {
 		return err
 	}

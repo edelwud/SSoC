@@ -14,6 +14,26 @@ var (
 	uploadLogger = logrus.WithField("context", "upload")
 )
 
+func uploadProgressBar(client client.Client) *widget.ProgressBar {
+	progress := widget.NewProgressBar()
+
+	go func() {
+		ctx := client.GetContext()
+		for {
+			status := ctx.UploadStatus()
+			if status == 0 {
+				progress.Hide()
+			}
+			if status != 0 {
+				progress.SetValue(status)
+				progress.Show()
+			}
+		}
+	}()
+
+	return progress
+}
+
 func getUploadCb(w fyne.Window, client client.Client) func(reader fyne.URIReadCloser, err error) {
 	return func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
@@ -51,6 +71,7 @@ func CreateUploadTab(w fyne.Window, client client.Client) *container.TabItem {
 		widget.NewButton("Upload file", func() {
 			dialog.ShowFileOpen(getUploadCb(w, client), w)
 		}),
+		uploadProgressBar(client),
 	))
 	return c
 }
