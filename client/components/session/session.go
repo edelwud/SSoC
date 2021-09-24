@@ -2,6 +2,7 @@ package session
 
 import "net"
 
+// Session declares functionality for client sessions
 type Session interface {
 	Release() error
 	GetConn() *net.TCPConn

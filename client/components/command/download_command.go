@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// DownloadCommand responding for construction "DOWNLOAD <filename>" command
 type DownloadCommand struct {
 	Cmd      string
 	Filename string
@@ -16,19 +17,26 @@ type DownloadCommand struct {
 	File     *session.File
 }
 
+// DownloadFolder folder where stored all downloaded files from server
 const DownloadFolder = "files/downloads"
 
+// dataChannelReady channel witch indicates that server datachannel listener is ready
 var dataChannelReady = make(chan bool, 10)
 
+// GeneratePort generates random port from 8000 to 9000
 func GeneratePort() string {
 	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
 }
 
+// Row serializes command "DOWNLOAD <filename>"
 func (c DownloadCommand) Row() []byte {
 	result := []byte(c.Cmd + " " + c.Filename + "\n")
 	return result
 }
 
+// CreateDatachannel creates datachannel between client and server;
+// client acts as serverside with randomly generated port (from 8000 to 9000),
+// server acts as clientside witch receives client port and connects to datachannel
 func (c DownloadCommand) CreateDatachannel(port string) error {
 	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
@@ -82,6 +90,8 @@ func (c DownloadCommand) CreateDatachannel(port string) error {
 	return nil
 }
 
+// Process registers download, generates port (8000-9000), creates datachannel via CreateDatachannel,
+// sends port to server, receives file and stores them to DownloadFolder
 func (c DownloadCommand) Process(ctx session.Session) error {
 	var err error
 	c.File, err = ctx.RegisterDownload(c.Filename, c.Filepath)
@@ -119,6 +129,7 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 	return nil
 }
 
+// CreateDownloadCommand constructs DownloadCommand
 func CreateDownloadCommand(filename string) Command {
 	return &DownloadCommand{
 		Cmd:      "DOWNLOAD",

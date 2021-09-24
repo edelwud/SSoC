@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// UploadCommand responding for construction "UPLOAD <filename>" command
 type UploadCommand struct {
 	Cmd      string
 	Filename string
@@ -17,11 +18,15 @@ type UploadCommand struct {
 	File     *session.File
 }
 
+// Row serializes command
 func (c UploadCommand) Row() []byte {
 	result := []byte(c.Cmd + " " + c.Filename + " " + strconv.Itoa(int(c.File.Size)) + "\n")
 	return result
 }
 
+// CreateDatachannel creates datachannel between server and client;
+// server performs datachannel listener with randomly generated port (from 8000 to 9000),
+// client receives datachannel port and performs TCP connection to server
 func (c UploadCommand) CreateDatachannel(port string) error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
@@ -62,6 +67,8 @@ func (c UploadCommand) CreateDatachannel(port string) error {
 	return nil
 }
 
+// Process registers upload, writes command to server, receives datachannel port,
+// initializes datachannel, writes received file to uploads
 func (c *UploadCommand) Process(ctx session.Session) error {
 	var err error
 	c.File, err = ctx.RegisterUpload(c.Filename, c.Filepath)
@@ -100,6 +107,7 @@ func (c *UploadCommand) Process(ctx session.Session) error {
 	return nil
 }
 
+// CreateUploadCommand constructs UploadCommand
 func CreateUploadCommand(filename string, path string) Command {
 	return &UploadCommand{
 		Cmd:      "UPLOAD",

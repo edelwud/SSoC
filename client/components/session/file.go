@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// File responsible for filesystem io
 type File struct {
 	*os.File
 	Filename    string
@@ -14,6 +15,7 @@ type File struct {
 	EndTime     time.Time
 }
 
+// Close closes file handle, sets EndTime as current
 func (f *File) Close() error {
 	f.EndTime = time.Now()
 
@@ -25,14 +27,17 @@ func (f *File) Close() error {
 	return nil
 }
 
+// Duration returns delta between EndTime and StartTime in nanoseconds
 func (f File) Duration() int {
 	return f.EndTime.Nanosecond() - f.StartTime.Nanosecond()
 }
 
+// Completed returns true if Transferred equals Size
 func (f File) Completed() bool {
 	return f.Transferred == f.Size
 }
 
+// Bitrate returns bitrate as Transferred / Duration (in MB/s)
 func (f File) Bitrate() float64 {
 	if f.Duration() == 0 {
 		return ^0 >> 1
@@ -40,6 +45,7 @@ func (f File) Bitrate() float64 {
 	return float64(f.Transferred) / float64(f.Duration()) * 1000000000 / 1024 / 1024
 }
 
+// Read implements io.Reader interface, calculates Transferred
 func (f *File) Read(p []byte) (int, error) {
 	n, err := f.File.Read(p)
 	f.Transferred += int64(n)
@@ -47,6 +53,7 @@ func (f *File) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// Write implements io.Writer interface, calculates Transferred
 func (f *File) Write(p []byte) (int, error) {
 	n, err := f.File.Write(p)
 	f.Transferred += int64(n)
@@ -54,6 +61,7 @@ func (f *File) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// CreateFile creates file (flags: os.O_CREATE|os.O_RDWR, permissions: 0777), receives stats
 func CreateFile(filename string, filepath string) (*File, error) {
 	opened, err := os.OpenFile(filepath, os.O_CREATE|os.O_RDWR, 0777)
 	if err != nil {
