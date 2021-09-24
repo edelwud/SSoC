@@ -23,7 +23,7 @@ jobs:
         
     - name: Install GL
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get libgl1-mesa-dev
+      run: sudo apt-get install libgl1-mesa-dev
 
     - name: Checkout code
       uses: actions/checkout@v2
