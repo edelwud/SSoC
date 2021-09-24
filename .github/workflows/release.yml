@@ -42,11 +42,14 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@master
         with:
-          name: binaries
-          path: bin/
+          name: binaries-${{ matrix.os }}
+          path: bin/*
 
   upload:
     name: Upload release artifacts
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ubuntu-latest
     needs: [build]
     steps:
@@ -56,15 +59,20 @@ jobs:
       - name: Download build artefacts
         uses: actions/download-artifact@v1
         with:
-          name: binaries
+          name: binaries-${{ matrix.os }}
           path: bin/
 
       - name: Create release archive
+        if: matrix.os == 'windows-latest'
         run: |
           mkdir release
-          zip -r release/ssoc-windows-amd64.zip files bin/server-windows-latest.exe bin/client-windows-latest.exe config.yaml
-          zip -r release/ssoc-linux-amd64.zip files bin/server-ubuntu-latest.exe bin/client-ubuntu-latest.exe config.yaml
-          zip -r release/ssoc-macos-amd64.zip files bin/server-macos-latest.exe bin/client-macos-latest.exe config.yaml
+          zip -r release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }}.exe bin/client-${{ matrix.os }}.exe config.yaml
+
+      - name: Create release archive
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir release
+          zip -r release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }} bin/client-${{ matrix.os }} config.yaml
 
       - name: Upload release assets
         uses: skx/github-action-publish-binaries@master
