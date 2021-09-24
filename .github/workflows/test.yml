@@ -23,7 +23,7 @@ jobs:
         
     - name: Install GL
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+      run: sudo apt-get install libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev
 
     - name: Checkout code
       uses: actions/checkout@v2
