@@ -6,6 +6,7 @@ on:
     branches:
       - master
   pull_request:
+
 jobs:
   golangci:
     name: lint
@@ -13,7 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: golangci-lint
+      - name: client-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
+          working-directory: client
+
+      - name: server-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+          working-directory: server
