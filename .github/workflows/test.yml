@@ -24,7 +24,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Test
+    - name: Client test
+      run: |
+        cd client
+        go test ./...
+
+    - name: Server test
       run: |
         cd server
         go test ./...
