@@ -20,6 +20,10 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
+        
+    - name: Install GL
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get libgl1-mesa-dev
 
     - name: Checkout code
       uses: actions/checkout@v2
