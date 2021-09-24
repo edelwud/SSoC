@@ -5,6 +5,7 @@ import (
 	"server/components/session"
 )
 
-type ExecService interface {
+// Service declares interface for commands processing
+type Service interface {
 	Process(ctx session.Session, cmd command.Command) error
 }

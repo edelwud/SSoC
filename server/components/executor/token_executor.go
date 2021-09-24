@@ -5,14 +5,20 @@ import (
 	t "server/components/token"
 )
 
+// TokenExecutor responsible for executing "TOKEN <access token>" command;
+// should parse and validate client token, should deregister previous client with equal token from session.Storage,
+// should set current access token as primary token for current client session
 type TokenExecutor struct {
-	ctx session.SessionStorage
+	ctx session.Storage
 }
 
+// CanAccess always returns true
 func (e TokenExecutor) CanAccess(_ string) bool {
 	return true
 }
 
+// Process receives <access token> from client, parses and validates token,
+// deregister previous user with equal token and sets current token for client session
 func (e TokenExecutor) Process(session session.Session, params ...string) error {
 	token := params[0]
 
@@ -38,6 +44,7 @@ func (e TokenExecutor) Process(session session.Session, params ...string) error 
 	return nil
 }
 
-func createTokenExecutor(ctx session.SessionStorage) Executor {
+// createTokenExecutor creates TokenExecutor with received context
+func createTokenExecutor(ctx session.Storage) Executor {
 	return &TokenExecutor{ctx: ctx}
 }

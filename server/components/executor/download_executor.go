@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
-const DownloadFolder = "files/uploads"
-
+// DownloadExecutor responsible for executing "DOWNLOAD <filename>" command
 type DownloadExecutor struct {
 	File *session.File
-	ctx  session.SessionStorage
+	ctx  session.Storage
 }
 
+// DownloadFolder folder where stored upload files, which is able to download
+const DownloadFolder = "files/uploads"
+
+// CanAccess returns false if current client haven't access token
 func (e DownloadExecutor) CanAccess(accessToken string) bool {
 	if accessToken == "" {
 		return false
@@ -23,6 +26,9 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 	return true
 }
 
+// CreateDatachannel creates datachannel between client and server;
+// client acts as serverside with randomly generated port (from 8000 to 9000),
+// server acts as clientside witch receives client port and connects to datachannel
 func (e DownloadExecutor) CreateDatachannel(port string) error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
@@ -63,6 +69,8 @@ func (e DownloadExecutor) CreateDatachannel(port string) error {
 	return nil
 }
 
+// Process executes DOWNLOAD command; receives <filename> from client, registers download in client session,
+// receives datachannel port, uses CreateDatachannel for datachannel initialization
 func (e *DownloadExecutor) Process(session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
@@ -103,6 +111,7 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 	return nil
 }
 
-func createDownloadExecutor(ctx session.SessionStorage) Executor {
+// createDownloadExecutor creates DownloadExecutor with received context
+func createDownloadExecutor(ctx session.Storage) Executor {
 	return &DownloadExecutor{ctx: ctx}
 }

@@ -9,15 +9,19 @@ import (
 	"time"
 )
 
-const UploadFolder = "files/uploads"
-
+// UploadExecutor responsible for executing "UPLOAD <filename>" command
 type UploadExecutor struct {
 	File *session.File
-	ctx  session.SessionStorage
+	ctx  session.Storage
 }
 
+// UploadFolder folder where stores all clients uploads
+const UploadFolder = "files/uploads"
+
+// dataChannelReady channel witch indicates that server datachannel listener is ready
 var dataChannelReady = make(chan bool, 10)
 
+// CanAccess returns false if current client haven't access token
 func (e UploadExecutor) CanAccess(accessToken string) bool {
 	if accessToken == "" {
 		return false
@@ -25,10 +29,14 @@ func (e UploadExecutor) CanAccess(accessToken string) bool {
 	return true
 }
 
+// GeneratePort generates random port from 8000 to 9000
 func GeneratePort() string {
 	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
 }
 
+// CreateDatachannel creates datachannel between server and client;
+// server performs datachannel listener with randomly generated port (from 8000 to 9000),
+// client receives datachannel port and performs TCP connection to server
 func (e UploadExecutor) CreateDatachannel(port string) error {
 	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
@@ -82,6 +90,8 @@ func (e UploadExecutor) CreateDatachannel(port string) error {
 	return nil
 }
 
+// Process executes UPLOAD command; receives <filename> from client, registers upload in client session,
+// sends generated port, performs datachannel connection with client, writes file to UploadFolder
 func (e *UploadExecutor) Process(session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
@@ -124,6 +134,7 @@ func (e *UploadExecutor) Process(session session.Session, params ...string) erro
 	return nil
 }
 
-func createUploadExecutor(ctx session.SessionStorage) Executor {
+// createUploadExecutor creates UploadExecutor with received context
+func createUploadExecutor(ctx session.Storage) Executor {
 	return &UploadExecutor{ctx: ctx}
 }

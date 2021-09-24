@@ -9,13 +9,17 @@ import (
 	"time"
 )
 
+// TcpServer implementation of Server interfaces based on TCP protocol
 type TcpServer struct {
 	Options     Options
 	Listener    *net.TCPListener
-	Context     session.SessionStorage
-	ExecService executor.ExecService
+	Context     session.Storage
+	ExecService executor.Service
 }
 
+// Run resolves server options from Options
+// creates net.Listener with TCPv4 background
+// executes AcceptLoop
 func (s *TcpServer) Run() error {
 	addr, err := net.ResolveTCPAddr("tcp", s.Options.Host+":"+s.Options.Port)
 	if err != nil {
@@ -37,6 +41,7 @@ func (s *TcpServer) Run() error {
 	return nil
 }
 
+// AcceptLoop accepts client connection, sets keep alive and keep alive period options from Options, handles connection
 func (s *TcpServer) AcceptLoop() error {
 	for {
 		conn, err := s.Listener.AcceptTCP()
@@ -61,11 +66,12 @@ func (s *TcpServer) AcceptLoop() error {
 	}
 }
 
+// HandleConnection creates server session for each connection, reads client command and executes it
 func (s *TcpServer) HandleConnection(conn net.Conn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 
 	accessToken := ""
-	currentSession := session.CreateBasicSession(conn, accessToken)
+	currentSession := session.CreateServerSession(conn, accessToken)
 
 	for {
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
@@ -90,6 +96,7 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 	}
 }
 
+// Close closes net.Listener
 func (s *TcpServer) Close() error {
 	if s.Listener == nil {
 		return nil
@@ -103,8 +110,13 @@ func (s *TcpServer) Close() error {
 	return nil
 }
 
+// CreateTcpServer creates TcpServer with initialized session.ServerStorage and executor.ServerExecutorService
 func CreateTcpServer(options Options) Server {
-	ctx := session.CreateBasicSessionStorage()
-	executorService := executor.RegisterBasicExecutorService(ctx)
-	return &TcpServer{Options: options, Context: ctx, ExecService: executorService}
+	ctx := session.CreateServerSessionStorage()
+	executorService := executor.RegisterServerExecutorService(ctx)
+	return &TcpServer{
+		Options:     options,
+		Context:     ctx,
+		ExecService: executorService,
+	}
 }

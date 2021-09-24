@@ -5,10 +5,13 @@ import (
 	"time"
 )
 
+// TimeExecutor responsible for executing "TIME" command;
+// should return current server time to client
 type TimeExecutor struct {
-	ctx session.SessionStorage
+	ctx session.Storage
 }
 
+// CanAccess returns false if current client haven't access token
 func (e TimeExecutor) CanAccess(accessToken string) bool {
 	if accessToken == "" {
 		return false
@@ -16,6 +19,7 @@ func (e TimeExecutor) CanAccess(accessToken string) bool {
 	return true
 }
 
+// Process returns current server time to client
 func (e TimeExecutor) Process(session session.Session, _ ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
@@ -30,6 +34,7 @@ func (e TimeExecutor) Process(session session.Session, _ ...string) error {
 	return nil
 }
 
-func createTimeExecutor(ctx session.SessionStorage) Executor {
+// createTimeExecutor creates TimeExecutor with received context
+func createTimeExecutor(ctx session.Storage) Executor {
 	return &TimeExecutor{ctx: ctx}
 }

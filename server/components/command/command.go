@@ -6,13 +6,16 @@ import (
 	"strings"
 )
 
+// Command contains necessary for command execution parameters
 type Command struct {
 	Cmd        string
 	Parameters []string
 }
 
+// MaxParametersCount maximum number of Command.Parameters
 const MaxParametersCount = 100
 
+// ParseCommand parses client command via regex, first parameter is Command.Cmd, next are Command.Parameters
 func ParseCommand(command string) (Command, error) {
 	command = strings.TrimSpace(command) + " "
 

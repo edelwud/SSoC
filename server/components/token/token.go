@@ -10,14 +10,17 @@ import (
 	"time"
 )
 
+// Payload includes serialization rules for access token
 type Payload struct {
 	Subject string    `json:"subject"`
 	Issued  time.Time `json:"issued"`
 	Expires time.Time `json:"expires"`
 }
 
+// ExpirationDays is the number of days when access token is valid
 const ExpirationDays = 3
 
+// Row serializes Payload
 func (p Payload) Row() (string, error) {
 	var buf bytes.Buffer
 
@@ -36,12 +39,15 @@ func (p Payload) Row() (string, error) {
 	return buf.String(), nil
 }
 
+// GenerateToken generates token from subject, uses current time for Payload.Issued parameter
 func GenerateToken(subject string) Payload {
 	issued := time.Now()
 	expires := issued.AddDate(0, 0, ExpirationDays)
 	return Payload{Subject: subject, Issued: issued, Expires: expires}
 }
 
+// GenerateMACToken generates access token where Payload.Subject is joined slice of available MAC addresses
+// uses GenerateToken for background
 func GenerateMACToken() (Payload, error) {
 	macAddr, err := getMacAddr()
 	if err != nil {
@@ -50,6 +56,7 @@ func GenerateMACToken() (Payload, error) {
 	return GenerateToken(strings.Join(macAddr, ",")), nil
 }
 
+// ParseToken parses access token, returns Payload structure
 func ParseToken(token []byte) (Payload, error) {
 	reader := strings.NewReader(string(token))
 	decoder := base64.NewDecoder(base64.StdEncoding, reader)
@@ -63,6 +70,7 @@ func ParseToken(token []byte) (Payload, error) {
 	return payload, err
 }
 
+// ValidateToken receives Payload structure, returns error when time.Now > Payload.Expires
 func ValidateToken(payload Payload) error {
 	if time.Now().Second() > payload.Expires.Second() {
 		return errors.New("token expired")
@@ -70,6 +78,7 @@ func ValidateToken(payload Payload) error {
 	return nil
 }
 
+// getMacAddr returns slice of available on current machine MAC addresses
 func getMacAddr() ([]string, error) {
 	ifas, err := net.Interfaces()
 	if err != nil {
