@@ -1,0 +1,69 @@
+name: Release
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    name: Building apps
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        app: [server, client]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install GL
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Build app (Linux & MacOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd ${{ matrix.app }}
+          go build -o bin/${{ matrix.app }}-${{ matrix.os }}
+
+      - name: Build app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd ${{ matrix.app }}
+          go build -o bin/${{ matrix.app }}-${{ matrix.os }}.exe
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: binaries
+          path: bin/
+
+  upload:
+    name: Upload release artifacts
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download build artefacts
+        uses: actions/download-artifact@v1
+        with:
+          name: binaries
+          path: bin/
+
+      - name: Create release archive
+        run: |
+          mkdir release
+          zip -r release/ssoc-windows-amd64.zip files bin/server-windows-latest.exe bin/client-windows-latest.exe config.yaml
+          zip -r release/ssoc-linux-amd64.zip files bin/server-ubuntu-latest.exe bin/client-ubuntu-latest.exe config.yaml
+          zip -r release/ssoc-macos-amd64.zip files bin/server-macos-latest.exe bin/client-macos-latest.exe config.yaml
+
+      - name: Upload release assets
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: './release/*'
