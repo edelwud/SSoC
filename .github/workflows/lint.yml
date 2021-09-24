@@ -10,13 +10,19 @@ on:
 jobs:
   golangci:
     name: lint
+    strategy:
+        matrix:
+          lint-folders: [server, client]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: server-lint
+      - name: Install GL
+        run: sudo apt-get install libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev
+
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
           skip-go-installation: true
-          working-directory: server
+          working-directory: ${{ matrix.lint-folders }}
