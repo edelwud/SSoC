@@ -25,5 +25,5 @@ jobs:
         with:
           version: v1.29
           skip-go-installation: true
-          args: --timeout=0
+          args: --timeout 10m0
           working-directory: ${{ matrix.lint-folders }}
