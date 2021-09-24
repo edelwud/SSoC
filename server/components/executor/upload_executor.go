@@ -23,10 +23,7 @@ var dataChannelReady = make(chan bool, 10)
 
 // CanAccess returns false if current client haven't access token
 func (e UploadExecutor) CanAccess(accessToken string) bool {
-	if accessToken == "" {
-		return false
-	}
-	return true
+	return accessToken != ""
 }
 
 // GeneratePort generates random port from 8000 to 9000

@@ -13,10 +13,7 @@ type EchoExecutor struct {
 
 // CanAccess returns false if current client haven't access token
 func (e EchoExecutor) CanAccess(accessToken string) bool {
-	if accessToken == "" {
-		return false
-	}
-	return true
+	return accessToken != ""
 }
 
 // Process writes to current client <client string>

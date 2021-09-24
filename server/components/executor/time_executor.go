@@ -13,10 +13,7 @@ type TimeExecutor struct {
 
 // CanAccess returns false if current client haven't access token
 func (e TimeExecutor) CanAccess(accessToken string) bool {
-	if accessToken == "" {
-		return false
-	}
-	return true
+	return accessToken != ""
 }
 
 // Process returns current server time to client

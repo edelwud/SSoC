@@ -20,10 +20,7 @@ const DownloadFolder = "files/uploads"
 
 // CanAccess returns false if current client haven't access token
 func (e DownloadExecutor) CanAccess(accessToken string) bool {
-	if accessToken == "" {
-		return false
-	}
-	return true
+	return accessToken != ""
 }
 
 // CreateDatachannel creates datachannel between client and server;
