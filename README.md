@@ -1,0 +1,2 @@
+# SSoC
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/84bc7fd90dfe41bd8681fd09a8c6516a)](https://app.codacy.com/gh/edelwud/SSoC?utm_source=github.com&utm_medium=referral&utm_content=edelwud/SSoC&utm_campaign=Badge_Grade_Settings)
