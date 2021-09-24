@@ -22,6 +22,9 @@ jobs:
         with:
           go-version: 1.17.x
 
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Build app (Linux & MacOS)
         if: matrix.os != 'windows-latest'
         run: |
