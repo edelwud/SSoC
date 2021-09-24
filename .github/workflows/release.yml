@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: binaries-${{ matrix.os }}
-          path: bin/*
+          path: bin/
 
   upload:
     name: Upload release artifacts
@@ -66,13 +66,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           mkdir release
-          zip -r release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }}.exe bin/client-${{ matrix.os }}.exe config.yaml
+          zip release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }}.exe bin/client-${{ matrix.os }}.exe config.yaml
 
       - name: Create release archive
         if: matrix.os != 'windows-latest'
         run: |
           mkdir release
-          zip -r release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }} bin/client-${{ matrix.os }} config.yaml
+          zip release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }} bin/client-${{ matrix.os }} config.yaml
 
       - name: Upload release assets
         uses: skx/github-action-publish-binaries@master
