@@ -63,16 +63,10 @@ jobs:
           path: bin/
 
       - name: Create release archive
-        if: matrix.os == 'windows-latest'
         run: |
           mkdir release
-          zip release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }}.exe bin/client-${{ matrix.os }}.exe config.yaml
-
-      - name: Create release archive
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir release
-          zip release/ssoc-${{ matrix.os }}.zip files bin/server-${{ matrix.os }} bin/client-${{ matrix.os }} config.yaml
+          zip -r release/ssoc-${{ matrix.os }}.zip files config.yaml
+          zip -uj release/ssoc-${{ matrix.os }}.zip bin/*
 
       - name: Upload release assets
         uses: skx/github-action-publish-binaries@master
