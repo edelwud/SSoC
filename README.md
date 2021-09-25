@@ -1,2 +1,14 @@
-# SSoC
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/84bc7fd90dfe41bd8681fd09a8c6516a)](https://app.codacy.com/gh/edelwud/SSoC?utm_source=github.com&utm_medium=referral&utm_content=edelwud/SSoC&utm_campaign=Badge_Grade_Settings)
+# 
+
+[![Build Status](https://travis-ci.org/edelwud/SSoC.svg?branch=master)](https://travis-ci.org/edelwud/SSoC)
+[![codecov](https://codecov.io/gh/edelwud/SSoC/branch/master/graph/badge.svg)](https://codecov.io/gh/edelwud/SSoC)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/edelwud/SSoC)
+
+## Sub Packages
+
+* [client](./client)
+
+* [server](./server)
+
+---
+Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
