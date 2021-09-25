@@ -1,4 +1,4 @@
-# 
+# SSoC
 
 [![golangci](https://golangci.com/badges/github.com/edelwud/SSoC.svg)](https://golangci.com/r/github.com/edelwud/SSoC)
 [![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/edelwud/SSoC)
