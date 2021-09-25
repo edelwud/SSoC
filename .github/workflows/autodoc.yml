@@ -16,6 +16,7 @@ jobs:
     - name: Update readme according to Go doc
       uses: posener/goreadme@v1
       with:
+        title: 'SSoC'
         email: ${{ secrets.EMAIL }}
         recursive: true
         badge-golangci: true
