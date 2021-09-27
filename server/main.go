@@ -17,7 +17,7 @@ func main() {
 
 	topLevelLogger.Infof("config loaded: %+v", cfg)
 
-	server := s.CreateTcpServer(cfg)
+	server := s.CreateTCPServer(cfg)
 	err = server.Run()
 	if err != nil {
 		topLevelLogger.Fatalf("server running error: %s", err)

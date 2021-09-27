@@ -25,7 +25,7 @@ func main() {
 		topLevelLogger.Fatalf("cannot read config: %s", err)
 	}
 
-	tcpClient := InitializeTcpClient(config)
+	tcpClient := InitializeTCPClient(config)
 	defer func(tcpClient client.Client) {
 		err := tcpClient.Disconnect()
 		if err != nil {

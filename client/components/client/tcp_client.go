@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-// TcpClient implementation of Client interface based on TCP protocol
-type TcpClient struct {
+// TCPClient implementation of Client interface based on TCP protocol
+type TCPClient struct {
 	Session session.Session
 	Options Options
 }
 
 // Connect resolves server options from Options, dials via net.DialTCP with TCPv4 background,
 // enables/disables keep alive and sets keep alive period from Options, generates and sends access token via Auth
-func (c *TcpClient) Connect() error {
+func (c *TCPClient) Connect() error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", c.Options.Host+":"+c.Options.Port)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (c *TcpClient) Connect() error {
 }
 
 // Auth generates MAC address based access token, creates client session, sends access token to server
-func (c *TcpClient) Auth(conn *net.TCPConn) error {
+func (c *TCPClient) Auth(conn *net.TCPConn) error {
 	macToken, err := token.GenerateMACToken()
 	if err != nil {
 		return err
@@ -71,8 +71,8 @@ func (c *TcpClient) Auth(conn *net.TCPConn) error {
 	return nil
 }
 
-// Disconnect closes tcp connection
-func (c TcpClient) Disconnect() error {
+// Disconnect closes TCP connection
+func (c TCPClient) Disconnect() error {
 	if c.Session.GetConn() == nil {
 		return nil
 	}
@@ -86,7 +86,7 @@ func (c TcpClient) Disconnect() error {
 }
 
 // Exec executes received command
-func (c TcpClient) Exec(cmd command.Command) error {
+func (c TCPClient) Exec(cmd command.Command) error {
 	err := cmd.Process(c.Session)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (c TcpClient) Exec(cmd command.Command) error {
 }
 
 // Write writes message for server
-func (c TcpClient) Write(cmd string) error {
+func (c TCPClient) Write(cmd string) error {
 	_, err := c.Session.GetConn().Write([]byte(cmd))
 	if err != nil {
 		return err
@@ -105,11 +105,11 @@ func (c TcpClient) Write(cmd string) error {
 }
 
 // GetContext receives client context
-func (c TcpClient) GetContext() session.Session {
+func (c TCPClient) GetContext() session.Session {
 	return c.Session
 }
 
-// CreateTcpClient constructs TcpClient with received Options
-func CreateTcpClient(options Options) Client {
-	return &TcpClient{Options: options}
+// CreateTCPClient constructs TCPClient with received Options
+func CreateTCPClient(options Options) Client {
+	return &TCPClient{Options: options}
 }

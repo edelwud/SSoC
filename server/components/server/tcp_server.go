@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// TcpServer implementation of Server interfaces based on TCP protocol
-type TcpServer struct {
+// TCPServer implementation of Server interfaces based on TCP protocol
+type TCPServer struct {
 	Options     Options
 	Listener    *net.TCPListener
 	Context     session.Storage
@@ -20,7 +20,7 @@ type TcpServer struct {
 // Run resolves server options from Options
 // creates net.Listener with TCPv4 background
 // executes AcceptLoop
-func (s *TcpServer) Run() error {
+func (s *TCPServer) Run() error {
 	addr, err := net.ResolveTCPAddr("tcp", s.Options.Host+":"+s.Options.Port)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (s *TcpServer) Run() error {
 }
 
 // AcceptLoop accepts client connection, sets keep alive and keep alive period options from Options, handles connection
-func (s *TcpServer) AcceptLoop() error {
+func (s *TCPServer) AcceptLoop() error {
 	for {
 		conn, err := s.Listener.AcceptTCP()
 		if err != nil {
@@ -67,7 +67,7 @@ func (s *TcpServer) AcceptLoop() error {
 }
 
 // HandleConnection creates server session for each connection, reads client command and executes it
-func (s *TcpServer) HandleConnection(conn net.Conn) {
+func (s *TCPServer) HandleConnection(conn net.Conn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 
 	accessToken := ""
@@ -97,7 +97,7 @@ func (s *TcpServer) HandleConnection(conn net.Conn) {
 }
 
 // Close closes net.Listener
-func (s *TcpServer) Close() error {
+func (s *TCPServer) Close() error {
 	if s.Listener == nil {
 		return nil
 	}
@@ -110,11 +110,11 @@ func (s *TcpServer) Close() error {
 	return nil
 }
 
-// CreateTcpServer creates TcpServer with initialized session.ServerStorage and executor.ServerExecutorService
-func CreateTcpServer(options Options) Server {
+// CreateTCPServer creates TCPServer with initialized session.ServerStorage and executor.ServerExecutorService
+func CreateTCPServer(options Options) Server {
 	ctx := session.CreateServerSessionStorage()
 	executorService := executor.RegisterServerExecutorService(ctx)
-	return &TcpServer{
+	return &TCPServer{
 		Options:     options,
 		Context:     ctx,
 		ExecService: executorService,

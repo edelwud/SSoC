@@ -2,10 +2,10 @@ package main
 
 import "main/components/client"
 
-func InitializeTcpClient(config client.Options) client.Client {
+func InitializeTCPClient(config client.Options) client.Client {
 	topLevelLogger.Infof("config loaded: %+v", config)
 
-	tcpClient = client.CreateTcpClient(config)
+	tcpClient = client.CreateTCPClient(config)
 
 	err := tcpClient.Connect()
 	if err != nil {
