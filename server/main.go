@@ -5,6 +5,7 @@ import (
 	s "server/components/server"
 )
 
+// ConfigFilename path to config file
 const ConfigFilename = "config.yaml"
 
 var topLevelLogger = logrus.WithField("context", "main")
