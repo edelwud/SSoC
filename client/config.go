@@ -7,8 +7,10 @@ import (
 	"os"
 )
 
+// configLogger logger for config utils
 var configLogger = logrus.WithField("context", "config")
 
+// LoadClientConfig loads client config from yaml file
 func LoadClientConfig(configPath string) (client.Options, error) {
 	f, err := os.Open(configPath)
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"os"
 )
 
+// ConfigFilename path to config file
 const ConfigFilename = "config.yaml"
 
 var (

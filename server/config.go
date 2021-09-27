@@ -7,8 +7,10 @@ import (
 	"server/components/server"
 )
 
+// configLogger logger for config utils
 var configLogger = logrus.WithField("context", "config")
 
+// LoadServerConfig loads server config from yaml file
 func LoadServerConfig(configPath string) (server.Options, error) {
 	f, err := os.Open(configPath)
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import "main/components/client"
 
+// InitializeTCPClient initializes TCP client from config
 func InitializeTCPClient(config client.Options) client.Client {
 	topLevelLogger.Infof("config loaded: %+v", config)
 
