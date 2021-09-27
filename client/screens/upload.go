@@ -66,6 +66,7 @@ func getUploadCb(w fyne.Window, client client.Client) func(reader fyne.URIReadCl
 	}
 }
 
+// CreateUploadTab creates upload tab widget
 func CreateUploadTab(w fyne.Window, client client.Client) *container.TabItem {
 	c := container.NewTabItem("UPLOAD", container.NewVBox(
 		widget.NewButton("Upload file", func() {

@@ -36,6 +36,7 @@ func downloadCb(client client.Client) func() {
 	}
 }
 
+// CreateDownloadTab creates download tab widget
 func CreateDownloadTab(client client.Client) *container.TabItem {
 	c := container.NewTabItem("DOWNLOAD", container.NewVBox(
 		downloadFilename,

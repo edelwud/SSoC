@@ -34,6 +34,7 @@ func getEchoCb(client client.Client) func() {
 	}
 }
 
+// CreateEchoTab creates echo tab widget
 func CreateEchoTab(client client.Client) *container.TabItem {
 	c := container.NewTabItem("ECHO", container.NewVBox(
 		echoEntry,

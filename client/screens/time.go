@@ -33,6 +33,7 @@ func getCurrentTimeCb(client client.Client) func() {
 	}
 }
 
+// CreateTimeTab creates time tab widget
 func CreateTimeTab(client client.Client) *container.TabItem {
 	c := container.NewTabItem("TIME", container.NewVBox(
 		widget.NewButton("Current time", getCurrentTimeCb(client)),
