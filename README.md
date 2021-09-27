@@ -1,33 +1,26 @@
 # SSoC
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aa79044cb2be47eda87a067d47b50a36)](https://www.codacy.com/gh/edelwud/SSoC/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=edelwud/SSoC&amp;utm_campaign=Badge_Grade)
 
-[![golangci](https://golangci.com/badges/github.com/edelwud/SSoC.svg)](https://golangci.com/r/github.com/edelwud/SSoC)
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/edelwud/SSoC)
+System software of computers BSUIR labs
 
-## Sub Packages
+## Project structure
+
+### Client
 
 * [client](./client)
+  * [client/components](./client/components)
+    * [client/components/client](./client/components/client)
+    * [client/components/command](./client/components/command)
+    * [client/components/session](./client/components/session)
+    * [client/components/token](./client/components/token)
+  * [client/screens](./client/screens)
 
-* [client/components/client](./client/components/client)
-
-* [client/components/command](./client/components/command)
-
-* [client/components/session](./client/components/session)
-
-* [client/components/token](./client/components/token)
-
-* [client/screens](./client/screens)
+### Server
 
 * [server](./server)
-
-* [server/components/command](./server/components/command)
-
-* [server/components/executor](./server/components/executor)
-
-* [server/components/server](./server/components/server)
-
-* [server/components/session](./server/components/session)
-
-* [server/components/token](./server/components/token)
-
----
-Readme created from Go doc with [goreadme](https://github.com/posener/goreadme)
+  * [server/components](./server/components)
+    * [server/components/command](./server/components/command)
+    * [server/components/executor](./server/components/executor)
+    * [server/components/server](./server/components/server)
+    * [server/components/session](./server/components/session)
+    * [server/components/token](./server/components/token)
