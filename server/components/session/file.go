@@ -48,7 +48,9 @@ func (f File) Bitrate() float64 {
 // Read implements io.Reader interface, calculates Transferred
 func (f *File) Read(p []byte) (int, error) {
 	n, err := f.File.Read(p)
-	f.Transferred += int64(n)
+	if err == nil {
+		f.Transferred += int64(n)
+	}
 
 	return n, err
 }
@@ -56,7 +58,9 @@ func (f *File) Read(p []byte) (int, error) {
 // Write implements io.Writer interface, calculates Transferred
 func (f *File) Write(p []byte) (int, error) {
 	n, err := f.File.Write(p)
-	f.Transferred += int64(n)
+	if err == nil {
+		f.Transferred += int64(n)
+	}
 
 	return n, err
 }
