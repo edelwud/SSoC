@@ -13,8 +13,8 @@ type TokenExecutor struct {
 }
 
 const (
-	SuccessResult = "SUCCESS"
-	FatalResult   = "FATAL"
+	SuccessResult = "SUCCESS\n"
+	FatalResult   = "FATAL\n"
 )
 
 // CanAccess always returns true

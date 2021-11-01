@@ -8,6 +8,8 @@ import (
 // Session declares functionality for server sessions
 type Session interface {
 	Release() error
+	ReceiveUnfinishedUploads() []string
+	ReceiveUnfinishedDownloads() []string
 	GetOptions() options.Options
 	GetConn() net.Conn
 	SetConn(conn net.Conn)

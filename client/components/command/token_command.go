@@ -1,6 +1,7 @@
 package command
 
 import (
+	"bufio"
 	"errors"
 	"main/components/session"
 	"strings"
@@ -26,8 +27,7 @@ func (c TokenCommand) Process(ctx session.Session) error {
 		return err
 	}
 
-	buf := make([]byte, 7)
-	_, err = ctx.GetConn().Read(buf)
+	buf, _, err := bufio.NewReader(ctx.GetConn()).ReadLine()
 	if err != nil {
 		return err
 	}

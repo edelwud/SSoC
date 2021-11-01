@@ -35,5 +35,7 @@ func RegisterServerExecutorService(ctx session.Storage) Service {
 	execService.ServiceSet["TOKEN"] = createTokenExecutor(ctx)
 	execService.ServiceSet["UPLOAD"] = createUploadExecutor(ctx)
 	execService.ServiceSet["DOWNLOAD"] = createDownloadExecutor(ctx)
+	execService.ServiceSet["REQUEST_UPLOAD"] = createRequestUploadExecutor(ctx)
+	execService.ServiceSet["REQUEST_DOWNLOAD"] = createRequestDownloadExecutor(ctx)
 	return execService
 }

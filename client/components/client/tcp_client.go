@@ -58,6 +58,18 @@ func (c *TCPClient) Auth(conn *net.TCPConn) error {
 		return err
 	}
 
+	reqDownload := command.CreateRequestDownloadCommand()
+	err = c.Exec(reqDownload)
+	if err != nil {
+		return err
+	}
+
+	reqUpload := command.CreateRequestUploadCommand()
+	err = c.Exec(reqUpload)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

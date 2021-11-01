@@ -92,6 +92,22 @@ func (s ServerSession) GetOptions() options.Options {
 	return s.Options
 }
 
+func (s ServerSession) ReceiveUnfinishedUploads() []string {
+	uploads := make([]string, 0)
+	for _, file := range s.Uploads {
+		if !file.Completed() {
+			uploads = append(uploads, file.Filename)
+		}
+	}
+	return uploads
+}
+
+func (s ServerSession) ReceiveUnfinishedDownloads() []string {
+	downloads := make([]string, 0)
+
+	return downloads
+}
+
 // CreateServerSession creates Session from connection and accessToken
 func CreateServerSession(conn net.Conn, options options.Options, accessToken string) Session {
 	return &ServerSession{
