@@ -17,3 +17,6 @@
 
 # Binaries
 files/**/*
+
+# Session files
+session.data

@@ -6,10 +6,10 @@ import (
 )
 
 // InitializeTCPClient initializes TCP client from config
-func InitializeTCPClient(config options.Options) client.Client {
+func InitializeTCPClient(config options.Options, accessToken string) client.Client {
 	topLevelLogger.Infof("config loaded: %+v", config)
 
-	tcpClient = client.CreateTCPClient(config)
+	tcpClient = client.CreateTCPClient(config, accessToken)
 
 	err := tcpClient.Connect()
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"main/components/client"
 	"main/components/command"
+	"main/components/token"
 	"main/screens"
 	"os"
 )
@@ -26,7 +27,25 @@ func main() {
 		topLevelLogger.Fatalf("cannot read config: %s", err)
 	}
 
-	tcpClient := InitializeTCPClient(config)
+	accessToken, err := LoadSession()
+	if err != nil {
+		macToken, err := token.GenerateMACToken()
+		if err != nil {
+			topLevelLogger.Fatalf("cannot generate MAC access token: %q", err)
+		}
+
+		accessToken, err = macToken.Row()
+		if err != nil {
+			topLevelLogger.Fatalf("cannot stringify MAC access token: %q", err)
+		}
+
+		err = StoreSession(accessToken)
+		if err != nil {
+			topLevelLogger.Fatalf("cannot store MAC access token: %q", err)
+		}
+	}
+
+	tcpClient := InitializeTCPClient(config, accessToken)
 	defer func(tcpClient client.Client) {
 		err := tcpClient.Disconnect()
 		if err != nil {

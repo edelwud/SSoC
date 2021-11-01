@@ -1,8 +1,9 @@
 package command
 
 import (
+	"errors"
 	"main/components/session"
-	"main/components/token"
+	"strings"
 )
 
 // TokenCommand responding for construction "TOKEN <access token>" command
@@ -10,6 +11,8 @@ type TokenCommand struct {
 	Cmd   string
 	Token string
 }
+
+const SuccessResult = "SUCCESS"
 
 // Row serializes command
 func (c TokenCommand) Row() []byte {
@@ -22,14 +25,24 @@ func (c TokenCommand) Process(ctx session.Session) error {
 	if err != nil {
 		return err
 	}
+
+	buf := make([]byte, 7)
+	_, err = ctx.GetConn().Read(buf)
+	if err != nil {
+		return err
+	}
+
+	result := strings.Trim(string(buf), "\n")
+	result = strings.Trim(result, " ")
+
+	if result != SuccessResult {
+		return errors.New("token was expired")
+	}
+
 	return nil
 }
 
 // CreateTokenCommand constructs TokenCommand
-func CreateTokenCommand(payload token.Payload) Command {
-	row, err := payload.Row()
-	if err != nil {
-		return nil
-	}
-	return &TokenCommand{Cmd: "TOKEN", Token: row}
+func CreateTokenCommand(accessToken string) Command {
+	return &TokenCommand{Cmd: "TOKEN", Token: accessToken}
 }

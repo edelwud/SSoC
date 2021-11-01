@@ -12,6 +12,11 @@ type TokenExecutor struct {
 	ctx session.Storage
 }
 
+const (
+	SuccessResult = "SUCCESS"
+	FatalResult   = "FATAL"
+)
+
 // CanAccess always returns true
 func (e TokenExecutor) CanAccess(_ string) bool {
 	return true
@@ -29,14 +34,29 @@ func (e TokenExecutor) Process(session session.Session, params ...string) error 
 
 	err = t.ValidateToken(payload)
 	if err != nil {
+		_, err = session.GetConn().Write([]byte(FatalResult))
+		if err != nil {
+			return err
+		}
+
 		return err
 	}
 
 	if _, err := e.ctx.Find(token); err == nil {
 		err := e.ctx.Deregister(token)
 		if err != nil {
+			_, err = session.GetConn().Write([]byte(FatalResult))
+			if err != nil {
+				return err
+			}
+
 			return err
 		}
+	}
+
+	_, err = session.GetConn().Write([]byte(SuccessResult))
+	if err != nil {
+		return err
 	}
 
 	session.SetAccessToken(token)

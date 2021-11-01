@@ -4,15 +4,15 @@ import (
 	"main/components/command"
 	"main/components/options"
 	"main/components/session"
-	"main/components/token"
 	"net"
 	"time"
 )
 
 // TCPClient implementation of Client interface based on TCP protocol
 type TCPClient struct {
-	Session session.Session
-	Options options.Options
+	AccessToken string
+	Session     session.Session
+	Options     options.Options
 }
 
 // Connect resolves server options from Options, dials via net.DialTCP with TCPv4 background,
@@ -50,21 +50,10 @@ func (c *TCPClient) Connect() error {
 
 // Auth generates MAC address based access token, creates client session, sends access token to server
 func (c *TCPClient) Auth(conn *net.TCPConn) error {
-	macToken, err := token.GenerateMACToken()
-	if err != nil {
-		return err
-	}
+	c.Session = session.CreateClientSession(conn, c.Options, c.AccessToken)
+	cmd := command.CreateTokenCommand(c.AccessToken)
 
-	t, err := macToken.Row()
-	if err != nil {
-		return err
-	}
-
-	c.Session = session.CreateClientSession(conn, c.Options, t)
-
-	cmd := command.CreateTokenCommand(macToken)
-
-	err = c.Exec(cmd)
+	err := c.Exec(cmd)
 	if err != nil {
 		return err
 	}
@@ -111,6 +100,9 @@ func (c TCPClient) GetContext() session.Session {
 }
 
 // CreateTCPClient constructs TCPClient with received Options
-func CreateTCPClient(options options.Options) Client {
-	return &TCPClient{Options: options}
+func CreateTCPClient(options options.Options, accessToken string) Client {
+	return &TCPClient{
+		Options:     options,
+		AccessToken: accessToken,
+	}
 }
