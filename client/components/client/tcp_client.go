@@ -2,6 +2,7 @@ package client
 
 import (
 	"main/components/command"
+	"main/components/options"
 	"main/components/session"
 	"main/components/token"
 	"net"
@@ -11,7 +12,7 @@ import (
 // TCPClient implementation of Client interface based on TCP protocol
 type TCPClient struct {
 	Session session.Session
-	Options Options
+	Options options.Options
 }
 
 // Connect resolves server options from Options, dials via net.DialTCP with TCPv4 background,
@@ -59,7 +60,7 @@ func (c *TCPClient) Auth(conn *net.TCPConn) error {
 		return err
 	}
 
-	c.Session = session.CreateClientSession(conn, t)
+	c.Session = session.CreateClientSession(conn, c.Options, t)
 
 	cmd := command.CreateTokenCommand(macToken)
 
@@ -110,6 +111,6 @@ func (c TCPClient) GetContext() session.Session {
 }
 
 // CreateTCPClient constructs TCPClient with received Options
-func CreateTCPClient(options Options) Client {
+func CreateTCPClient(options options.Options) Client {
 	return &TCPClient{Options: options}
 }

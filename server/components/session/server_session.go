@@ -2,6 +2,7 @@ package session
 
 import (
 	"net"
+	"server/components/options"
 )
 
 // ServerSession basic storage for server sessions
@@ -10,6 +11,7 @@ type ServerSession struct {
 	AccessToken string
 	Uploads     []*File
 	Downloads   []*File
+	Options     options.Options
 }
 
 // Release closes connection between server and client
@@ -86,12 +88,17 @@ func (s ServerSession) FindDownload(filename string) *File {
 	return nil
 }
 
+func (s ServerSession) GetOptions() options.Options {
+	return s.Options
+}
+
 // CreateServerSession creates Session from connection and accessToken
-func CreateServerSession(conn net.Conn, accessToken string) Session {
+func CreateServerSession(conn net.Conn, options options.Options, accessToken string) Session {
 	return &ServerSession{
 		Conn:        conn,
 		AccessToken: accessToken,
 		Uploads:     []*File{},
 		Downloads:   []*File{},
+		Options:     options,
 	}
 }

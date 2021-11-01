@@ -1,10 +1,15 @@
 package session
 
-import "net"
+import (
+	"main/components/options"
+	"net"
+)
 
 // Session declares functionality for client sessions
 type Session interface {
 	Release() error
+	GetOptions() options.Options
+
 	GetConn() *net.TCPConn
 	SetConn(conn *net.TCPConn)
 	GetAccessToken() string

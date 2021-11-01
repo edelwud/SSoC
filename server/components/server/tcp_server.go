@@ -5,13 +5,14 @@ import (
 	"net"
 	"server/components/command"
 	"server/components/executor"
+	"server/components/options"
 	"server/components/session"
 	"time"
 )
 
 // TCPServer implementation of Server interfaces based on TCP protocol
 type TCPServer struct {
-	Options     Options
+	Options     options.Options
 	Listener    *net.TCPListener
 	Context     session.Storage
 	ExecService executor.Service
@@ -71,7 +72,7 @@ func (s *TCPServer) HandleConnection(conn net.Conn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 
 	accessToken := ""
-	currentSession := session.CreateServerSession(conn, accessToken)
+	currentSession := session.CreateServerSession(conn, s.Options, accessToken)
 
 	for {
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
@@ -111,7 +112,7 @@ func (s *TCPServer) Close() error {
 }
 
 // CreateTCPServer creates TCPServer with initialized session.ServerStorage and executor.ServerExecutorService
-func CreateTCPServer(options Options) Server {
+func CreateTCPServer(options options.Options) Server {
 	ctx := session.CreateServerSessionStorage()
 	executorService := executor.RegisterServerExecutorService(ctx)
 	return &TCPServer{

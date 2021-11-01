@@ -4,14 +4,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"os"
-	"server/components/server"
+	"server/components/options"
 )
 
 // configLogger logger for config utils
 var configLogger = logrus.WithField("context", "config")
 
 // LoadServerConfig loads server config from yaml file
-func LoadServerConfig(configPath string) (server.Options, error) {
+func LoadServerConfig(configPath string) (options.Options, error) {
 	f, err := os.Open(configPath)
 	if err != nil {
 		panic(err)
@@ -23,11 +23,11 @@ func LoadServerConfig(configPath string) (server.Options, error) {
 		}
 	}(f)
 
-	var cfg server.Options
+	var cfg options.Options
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		return server.Options{}, err
+		return options.Options{}, err
 	}
 	return cfg, nil
 }

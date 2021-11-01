@@ -4,6 +4,7 @@ import (
 	"io"
 	"math/rand"
 	"net"
+	"server/components/options"
 	"server/components/session"
 	"strconv"
 	"time"
@@ -34,8 +35,8 @@ func GeneratePort() string {
 // CreateDatachannel creates datachannel between server and client;
 // server performs datachannel listener with randomly generated port (from 8000 to 9000),
 // client receives datachannel port and performs TCP connection to server
-func (e UploadExecutor) CreateDatachannel(port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
+func (e UploadExecutor) CreateDatachannel(options options.Options, port string) error {
+	addr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
 	if err != nil {
 		return err
 	}
@@ -113,7 +114,7 @@ func (e *UploadExecutor) Process(session session.Session, params ...string) erro
 		}
 	}()
 
-	err = e.CreateDatachannel(port)
+	err = e.CreateDatachannel(session.GetOptions(), port)
 	if err != nil {
 		return err
 	}
@@ -133,5 +134,7 @@ func (e *UploadExecutor) Process(session session.Session, params ...string) erro
 
 // createUploadExecutor creates UploadExecutor with received context
 func createUploadExecutor(ctx session.Storage) Executor {
-	return &UploadExecutor{ctx: ctx}
+	return &UploadExecutor{
+		ctx: ctx,
+	}
 }

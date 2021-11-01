@@ -2,6 +2,7 @@ package command
 
 import (
 	"io"
+	"main/components/options"
 	"main/components/session"
 	"math/rand"
 	"net"
@@ -37,8 +38,8 @@ func (c DownloadCommand) Row() []byte {
 // CreateDatachannel creates datachannel between client and server;
 // client acts as serverside with randomly generated port (from 8000 to 9000),
 // server acts as clientside witch receives client port and connects to datachannel
-func (c DownloadCommand) CreateDatachannel(port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
+func (c DownloadCommand) CreateDatachannel(options options.Options, port string) error {
+	addr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func (c DownloadCommand) Process(ctx session.Session) error {
 		}
 	}()
 
-	err = c.CreateDatachannel(port)
+	err = c.CreateDatachannel(ctx.GetOptions(), port)
 	if err != nil {
 		return err
 	}

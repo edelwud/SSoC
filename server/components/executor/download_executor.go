@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"net"
+	"server/components/options"
 	"server/components/session"
 	"strings"
 	"time"
@@ -26,8 +27,8 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 // CreateDatachannel creates datachannel between client and server;
 // client acts as serverside with randomly generated port (from 8000 to 9000),
 // server acts as clientside witch receives client port and connects to datachannel
-func (e DownloadExecutor) CreateDatachannel(port string) error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
+func (e DownloadExecutor) CreateDatachannel(options options.Options, port string) error {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 	port = strings.Trim(port, "\n")
 	port = strings.Trim(port, " ")
 
-	err = e.CreateDatachannel(port)
+	err = e.CreateDatachannel(session.GetOptions(), port)
 	if err != nil {
 		return err
 	}
@@ -110,5 +111,7 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 
 // createDownloadExecutor creates DownloadExecutor with received context
 func createDownloadExecutor(ctx session.Storage) Executor {
-	return &DownloadExecutor{ctx: ctx}
+	return &DownloadExecutor{
+		ctx: ctx,
+	}
 }

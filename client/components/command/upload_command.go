@@ -3,6 +3,7 @@ package command
 import (
 	"bufio"
 	"io"
+	"main/components/options"
 	"main/components/session"
 	"net"
 	"strconv"
@@ -27,8 +28,8 @@ func (c UploadCommand) Row() []byte {
 // CreateDatachannel creates datachannel between server and client;
 // server performs datachannel listener with randomly generated port (from 8000 to 9000),
 // client receives datachannel port and performs TCP connection to server
-func (c UploadCommand) CreateDatachannel(port string) error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
+func (c UploadCommand) CreateDatachannel(options options.Options, port string) error {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,7 @@ func (c *UploadCommand) Process(ctx session.Session) error {
 	port = strings.Trim(port, "\n")
 	port = strings.Trim(port, " ")
 
-	err = c.CreateDatachannel(port)
+	err = c.CreateDatachannel(ctx.GetOptions(), port)
 	if err != nil {
 		return err
 	}

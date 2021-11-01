@@ -1,9 +1,12 @@
 package main
 
-import "main/components/client"
+import (
+	"main/components/client"
+	"main/components/options"
+)
 
 // InitializeTCPClient initializes TCP client from config
-func InitializeTCPClient(config client.Options) client.Client {
+func InitializeTCPClient(config options.Options) client.Client {
 	topLevelLogger.Infof("config loaded: %+v", config)
 
 	tcpClient = client.CreateTCPClient(config)

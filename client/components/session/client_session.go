@@ -1,6 +1,7 @@
 package session
 
 import (
+	"main/components/options"
 	"net"
 )
 
@@ -10,6 +11,7 @@ type ClientSession struct {
 	AccessToken string
 	Uploads     []*File
 	Downloads   []*File
+	Options     options.Options
 }
 
 // Release closes connection between server and client
@@ -133,12 +135,18 @@ func (s ClientSession) DownloadStatus() float64 {
 	return summary / float64(len(s.Downloads))
 }
 
+// GetOptions returns options for connection to server
+func (s ClientSession) GetOptions() options.Options {
+	return s.Options
+}
+
 // CreateClientSession creates Session from connection and accessToken
-func CreateClientSession(conn *net.TCPConn, accessToken string) Session {
+func CreateClientSession(conn *net.TCPConn, options options.Options, accessToken string) Session {
 	return &ClientSession{
 		Conn:        conn,
 		AccessToken: accessToken,
 		Uploads:     []*File{},
 		Downloads:   []*File{},
+		Options:     options,
 	}
 }

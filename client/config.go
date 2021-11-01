@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"main/components/client"
+	"main/components/options"
 	"os"
 )
 
@@ -11,7 +11,7 @@ import (
 var configLogger = logrus.WithField("context", "config")
 
 // LoadClientConfig loads client config from yaml file
-func LoadClientConfig(configPath string) (client.Options, error) {
+func LoadClientConfig(configPath string) (options.Options, error) {
 	f, err := os.Open(configPath)
 	if err != nil {
 		panic(err)
@@ -23,11 +23,11 @@ func LoadClientConfig(configPath string) (client.Options, error) {
 		}
 	}(f)
 
-	var cfg client.Options
+	var cfg options.Options
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		return client.Options{}, err
+		return options.Options{}, err
 	}
 	return cfg, nil
 }
