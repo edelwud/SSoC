@@ -27,8 +27,8 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 // CreateDatachannel creates datachannel between client and server;
 // client acts as serverside with randomly generated port (from 8000 to 9000),
 // server acts as clientside witch receives client port and connects to datachannel
-func (e DownloadExecutor) CreateDatachannel(options options.Options, port string) error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
+func (e DownloadExecutor) CreateDatachannel(options options.Options, address string, port string) error {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", address+":"+port)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,9 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 	port = strings.Trim(port, "\n")
 	port = strings.Trim(port, " ")
 
-	err = e.CreateDatachannel(session.GetOptions(), port)
+	ip := strings.Split(s.GetConn().RemoteAddr().String(), ":")[0]
+
+	err = e.CreateDatachannel(session.GetOptions(), ip, port)
 	if err != nil {
 		return err
 	}

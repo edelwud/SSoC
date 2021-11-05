@@ -39,7 +39,7 @@ func (c DownloadCommand) Row() []byte {
 // client acts as serverside with randomly generated port (from 8000 to 9000),
 // server acts as clientside witch receives client port and connects to datachannel
 func (c DownloadCommand) CreateDatachannel(options options.Options, port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
+	addr, err := net.ResolveTCPAddr("tcp", ":"+port)
 	if err != nil {
 		return err
 	}
