@@ -13,7 +13,6 @@ type DownloadRequester struct {
 	Cmd      string
 	Filename string
 	Filepath string
-	File     *session.File
 }
 
 // DownloadFolder folder where stored all downloaded files from server
@@ -40,8 +39,7 @@ func (r DownloadRequester) ReceivePort(conn net.Conn) (string, error) {
 // Process registers download, generates port (8000-9000), creates datachannel via CreateDatachannel,
 // sends port to server, receives file and stores them to DownloadFolder
 func (r DownloadRequester) Process(ctx session.Session) error {
-	var err error
-	r.File, err = ctx.RegisterDownload(r.Filename, r.Filepath)
+	file, err := ctx.RegisterDownload(r.Filename, r.Filepath)
 
 	_, err = ctx.GetConn().Write(r.Row())
 	if err != nil {
@@ -56,7 +54,7 @@ func (r DownloadRequester) Process(ctx session.Session) error {
 		return err
 	}
 
-	err = dc.Download(r.File)
+	err = dc.Download(file)
 	if err != nil {
 		return err
 	}

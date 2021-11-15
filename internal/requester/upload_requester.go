@@ -5,7 +5,6 @@ import (
 	"SSoC/internal/session"
 	"bufio"
 	"net"
-	"strconv"
 	"strings"
 )
 
@@ -14,12 +13,11 @@ type UploadRequester struct {
 	Cmd      string
 	Filename string
 	Filepath string
-	File     *session.File
 }
 
 // Row serializes command
 func (r UploadRequester) Row() []byte {
-	result := []byte(r.Cmd + " " + r.Filename + " " + strconv.Itoa(int(r.File.Size)) + "\n")
+	result := []byte(r.Cmd + " " + r.Filename + "\n")
 	return result
 }
 
@@ -38,8 +36,7 @@ func (r UploadRequester) ReceivePort(conn net.Conn) (string, error) {
 // Process registers upload, writes command to server, receives datachannel port,
 // initializes datachannel, writes received file to uploads
 func (r *UploadRequester) Process(ctx session.Session) error {
-	var err error
-	r.File, err = ctx.RegisterUpload(r.Filename, r.Filepath)
+	file, err := ctx.RegisterUpload(r.Filename, r.Filepath)
 	if err != nil {
 		return err
 	}
@@ -57,7 +54,7 @@ func (r *UploadRequester) Process(ctx session.Session) error {
 		return err
 	}
 
-	err = dc.Upload(r.File)
+	err = dc.Upload(file)
 	if err != nil {
 		return err
 	}
