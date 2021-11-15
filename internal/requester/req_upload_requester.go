@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+const (
+	RequestedUploadDir = "files/downloads"
+)
+
 // RequestUploadRequester responding for construction "REQUEST_UPLOAD" command
 type RequestUploadRequester struct {
 	Cmd string
@@ -35,7 +39,7 @@ func (c RequestUploadRequester) Process(ctx session.Session) error {
 		if upload == "" {
 			continue
 		}
-		cmd := CreateUploadRequester(upload, "")
+		cmd := CreateUploadRequester(upload, RequestedUploadDir)
 		_, err := ctx.GetConn().Write(cmd.Row())
 		if err != nil {
 			return err
