@@ -1,14 +1,12 @@
 package requester
 
 import (
-	"SSoC/internal/options"
+	"SSoC/internal/client/datachannel"
 	"SSoC/internal/session"
 	"bufio"
-	"io"
 	"net"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // UploadRequester responding for construction "UPLOAD <filename>" command
@@ -20,87 +18,51 @@ type UploadRequester struct {
 }
 
 // Row serializes command
-func (c UploadRequester) Row() []byte {
-	result := []byte(c.Cmd + " " + c.Filename + " " + strconv.Itoa(int(c.File.Size)) + "\n")
+func (r UploadRequester) Row() []byte {
+	result := []byte(r.Cmd + " " + r.Filename + " " + strconv.Itoa(int(r.File.Size)) + "\n")
 	return result
 }
 
-// CreateDatachannel creates datachannel between server and client;
-// server performs datachannel listener with randomly generated port (from 8000 to 9000),
-// client receives datachannel port and performs TCP connection to server
-func (c UploadRequester) CreateDatachannel(options options.Options, port string) error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
+func (r UploadRequester) ReceivePort(conn net.Conn) (string, error) {
+	port, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
-		return err
-	}
-
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		return err
-	}
-	defer func(conn *net.TCPConn) {
-		err := conn.Close()
-		if err != nil {
-			return
-		}
-	}(conn)
-
-	err = conn.SetKeepAlive(true)
-	if err != nil {
-		return err
-	}
-
-	err = conn.SetKeepAlivePeriod(360 * time.Second)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(conn, c.File)
-	if err != nil {
-		return err
-	}
-
-	err = c.File.Sync()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Process registers upload, writes command to server, receives datachannel port,
-// initializes datachannel, writes received file to uploads
-func (c *UploadRequester) Process(ctx session.Session) error {
-	var err error
-	c.File, err = ctx.RegisterUpload(c.Filename, c.Filepath)
-	if err != nil {
-		return err
-	}
-
-	_, err = ctx.GetConn().Write(c.Row())
-	if err != nil {
-		return err
-	}
-
-	port, err := bufio.NewReader(ctx.GetConn()).ReadString('\n')
-	if err != nil {
-		return err
+		return "", err
 	}
 
 	port = strings.Trim(port, "\n")
 	port = strings.Trim(port, " ")
 
-	err = c.CreateDatachannel(ctx.GetOptions(), port)
+	return port, nil
+}
+
+// Process registers upload, writes command to server, receives datachannel port,
+// initializes datachannel, writes received file to uploads
+func (r *UploadRequester) Process(ctx session.Session) error {
+	var err error
+	r.File, err = ctx.RegisterUpload(r.Filename, r.Filepath)
 	if err != nil {
 		return err
 	}
 
-	_, err = bufio.NewReader(ctx.GetConn()).ReadString('\n')
+	_, err = ctx.GetConn().Write(r.Row())
 	if err != nil {
 		return err
 	}
 
-	err = c.File.Close()
+	port, err := r.ReceivePort(ctx.GetConn())
+
+	dc := datachannel.NewTCPDatachannel(port, ctx.GetOptions())
+	err = dc.Connect()
+	if err != nil {
+		return err
+	}
+
+	err = dc.Upload(r.File)
+	if err != nil {
+		return err
+	}
+
+	err = dc.Close()
 	if err != nil {
 		return err
 	}

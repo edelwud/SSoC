@@ -1,13 +1,11 @@
 package requester
 
 import (
-	"SSoC/internal/options"
+	"SSoC/internal/client/datachannel"
 	"SSoC/internal/session"
-	"io"
-	"math/rand"
+	"bufio"
 	"net"
-	"strconv"
-	"time"
+	"strings"
 )
 
 // DownloadRequester responding for construction "DOWNLOAD <filename>" command
@@ -21,108 +19,49 @@ type DownloadRequester struct {
 // DownloadFolder folder where stored all downloaded files from server
 const DownloadFolder = "files/downloads"
 
-// dataChannelReady channel witch indicates that server datachannel listener is ready
-var dataChannelReady = make(chan bool, 10)
-
-// GeneratePort generates random port from 8000 to 9000
-func GeneratePort() string {
-	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
-}
-
 // Row serializes command "DOWNLOAD <filename>"
-func (c DownloadRequester) Row() []byte {
-	result := []byte(c.Cmd + " " + c.Filename + "\n")
+func (r DownloadRequester) Row() []byte {
+	result := []byte(r.Cmd + " " + r.Filename + "\n")
 	return result
 }
 
-// CreateDatachannel creates datachannel between client and server;
-// client acts as serverside with randomly generated port (from 8000 to 9000),
-// server acts as clientside witch receives client port and connects to datachannel
-func (c DownloadRequester) CreateDatachannel(options options.Options, port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
+func (r DownloadRequester) ReceivePort(conn net.Conn) (string, error) {
+	port, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return err
-	}
-	defer func(listener *net.TCPListener) {
-		err := listener.Close()
-		if err != nil {
-			return
-		}
-	}(listener)
+	port = strings.Trim(port, "\n")
+	port = strings.Trim(port, " ")
 
-	dataChannelReady <- true
-
-	conn, err := listener.AcceptTCP()
-	if err != nil {
-		return err
-	}
-	defer func(conn *net.TCPConn) {
-		err := conn.Close()
-		if err != nil {
-			return
-		}
-	}(conn)
-
-	err = conn.SetKeepAlive(true)
-	if err != nil {
-		return err
-	}
-
-	err = conn.SetKeepAlivePeriod(360 * time.Second)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(c.File, conn)
-	if err != nil {
-		return err
-	}
-
-	err = c.File.Sync()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return port, nil
 }
 
 // Process registers download, generates port (8000-9000), creates datachannel via CreateDatachannel,
 // sends port to server, receives file and stores them to DownloadFolder
-func (c DownloadRequester) Process(ctx session.Session) error {
+func (r DownloadRequester) Process(ctx session.Session) error {
 	var err error
-	c.File, err = ctx.RegisterDownload(c.Filename, c.Filepath)
+	r.File, err = ctx.RegisterDownload(r.Filename, r.Filepath)
 
-	_, err = ctx.GetConn().Write(c.Row())
+	_, err = ctx.GetConn().Write(r.Row())
 	if err != nil {
 		return err
 	}
 
-	port := GeneratePort()
+	port, err := r.ReceivePort(ctx.GetConn())
 
-	go func() {
-		<-dataChannelReady
-		_, err = ctx.GetConn().Write([]byte(port + "\n"))
-		if err != nil {
-			return
-		}
-	}()
-
-	err = c.CreateDatachannel(ctx.GetOptions(), port)
+	dc := datachannel.NewTCPDatachannel(port, ctx.GetOptions())
+	err = dc.Connect()
 	if err != nil {
 		return err
 	}
 
-	_, err = ctx.GetConn().Write([]byte("RECEIVED\n"))
+	err = dc.Download(r.File)
 	if err != nil {
 		return err
 	}
 
-	err = c.File.Close()
+	err = dc.Close()
 	if err != nil {
 		return err
 	}

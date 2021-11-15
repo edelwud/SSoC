@@ -1,13 +1,8 @@
 package executor
 
 import (
-	"SSoC/internal/options"
+	"SSoC/internal/server/datachannel"
 	"SSoC/internal/session"
-	"io"
-	"math/rand"
-	"net"
-	"strconv"
-	"time"
 )
 
 // UploadExecutor responsible for executing "UPLOAD <filename>" command
@@ -19,73 +14,9 @@ type UploadExecutor struct {
 // UploadFolder folder where stores all clients uploads
 const UploadFolder = "files/uploads"
 
-// dataChannelReady channel witch indicates that server datachannel listener is ready
-var dataChannelReady = make(chan bool, 10)
-
 // CanAccess returns false if current client haven't access token
 func (e UploadExecutor) CanAccess(accessToken string) bool {
 	return accessToken != ""
-}
-
-// GeneratePort generates random port from 8000 to 9000
-func GeneratePort() string {
-	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
-}
-
-// CreateDatachannel creates datachannel between server and client;
-// server performs datachannel listener with randomly generated port (from 8000 to 9000),
-// client receives datachannel port and performs TCP connection to server
-func (e UploadExecutor) CreateDatachannel(options options.Options, port string) error {
-	addr, err := net.ResolveTCPAddr("tcp", options.Host+":"+port)
-	if err != nil {
-		return err
-	}
-
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return err
-	}
-	defer func(listener *net.TCPListener) {
-		err := listener.Close()
-		if err != nil {
-			return
-		}
-	}(listener)
-
-	dataChannelReady <- true
-
-	conn, err := listener.AcceptTCP()
-	if err != nil {
-		return err
-	}
-	defer func(conn *net.TCPConn) {
-		err := conn.Close()
-		if err != nil {
-			return
-		}
-	}(conn)
-
-	err = conn.SetKeepAlive(true)
-	if err != nil {
-		return err
-	}
-
-	err = conn.SetKeepAlivePeriod(360 * time.Second)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(e.File, conn)
-	if err != nil {
-		return err
-	}
-
-	err = e.File.Sync()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Process executes UPLOAD command; receives <filename> from client, registers upload in client session,
@@ -104,27 +35,28 @@ func (e *UploadExecutor) Process(session session.Session, params ...string) erro
 		return err
 	}
 
-	port := GeneratePort()
-
-	go func() {
-		<-dataChannelReady
-		_, err = s.GetConn().Write([]byte(port + "\n"))
-		if err != nil {
-			return
-		}
-	}()
-
-	err = e.CreateDatachannel(session.GetOptions(), port)
+	dc := datachannel.NewTCPDatachannel(session.GetOptions())
+	err = dc.Listen()
 	if err != nil {
 		return err
 	}
 
-	_, err = s.GetConn().Write([]byte("RECEIVED\n"))
+	_, err = session.GetConn().Write([]byte(dc.GetPort() + "\n"))
 	if err != nil {
 		return err
 	}
 
-	err = e.File.Close()
+	err = dc.Accept()
+	if err != nil {
+		return err
+	}
+
+	err = dc.Upload(e.File)
+	if err != nil {
+		return err
+	}
+
+	err = dc.Close()
 	if err != nil {
 		return err
 	}
