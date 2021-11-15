@@ -6,11 +6,6 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/client"
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "gomod"
-    directory: "/server"
+    directory: "/"
     schedule:
       interval: "daily"
