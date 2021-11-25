@@ -8,7 +8,7 @@ import (
 
 // ServerSession basic storage for server sessions
 type ServerSession struct {
-	Conn        *net.TCPConn
+	Conn        net.Conn
 	AccessToken string
 	Uploads     []*session.File
 	Downloads   []*session.File
@@ -30,12 +30,12 @@ func (s ServerSession) Release() error {
 }
 
 // GetConn receives connection
-func (s ServerSession) GetConn() *net.TCPConn {
+func (s ServerSession) GetConn() net.Conn {
 	return s.Conn
 }
 
 // SetConn updates connection
-func (s *ServerSession) SetConn(conn *net.TCPConn) {
+func (s *ServerSession) SetConn(conn net.Conn) {
 	s.Conn = conn
 }
 
