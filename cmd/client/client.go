@@ -3,6 +3,7 @@ package main
 import (
 	"SSoC/internal/client"
 	tcp "SSoC/internal/client/tcp_client"
+	udp "SSoC/internal/client/udp_client"
 	"SSoC/internal/options"
 )
 
@@ -14,7 +15,7 @@ func InitializeClient(config options.Options, accessToken string) client.Client 
 	if config.Protocol == "tcp" {
 		c = tcp.CreateTCPClient(config, accessToken)
 	} else {
-		c = tcp.CreateTCPClient(config, accessToken)
+		c = udp.CreateUDPClient(config, accessToken)
 	}
 
 	err := c.Connect()
