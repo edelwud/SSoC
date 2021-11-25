@@ -48,7 +48,7 @@ func (r *UploadRequester) Process(ctx session.Session) error {
 
 	port, err := r.ReceivePort(ctx.GetConn())
 
-	dc := datachannel.NewTCPDatachannel(port, ctx.GetOptions())
+	dc := datachannel.NewDatachannel(port, ctx.GetOptions())
 	err = dc.Connect()
 	if err != nil {
 		return err

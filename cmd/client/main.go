@@ -45,9 +45,9 @@ func main() {
 		}
 	}
 
-	clientChannel := InitializeTCPClient(config, accessToken)
-	defer func(tcpClient client.Client) {
-		err := tcpClient.Disconnect()
+	clientChannel := InitializeClient(config, accessToken)
+	defer func(channel client.Client) {
+		err := channel.Disconnect()
 		if err != nil {
 			return
 		}
