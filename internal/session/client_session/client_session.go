@@ -8,7 +8,7 @@ import (
 
 // ClientSession basic storage for client sessions
 type ClientSession struct {
-	Conn        *net.TCPConn
+	Conn        net.Conn
 	AccessToken string
 	Uploads     []*session.File
 	Downloads   []*session.File
@@ -30,12 +30,12 @@ func (s ClientSession) Release() error {
 }
 
 // GetConn receives connection
-func (s ClientSession) GetConn() *net.TCPConn {
+func (s ClientSession) GetConn() net.Conn {
 	return s.Conn
 }
 
 // SetConn updates connection
-func (s *ClientSession) SetConn(conn *net.TCPConn) {
+func (s *ClientSession) SetConn(conn net.Conn) {
 	s.Conn = conn
 }
 
@@ -158,7 +158,7 @@ func (s ClientSession) ReceiveUnfinishedDownloads() []string {
 }
 
 // CreateClientSession creates Session from connection and accessToken
-func CreateClientSession(conn *net.TCPConn, options options.Options, accessToken string) session.Session {
+func CreateClientSession(conn net.Conn, options options.Options, accessToken string) session.Session {
 	return &ClientSession{
 		Conn:        conn,
 		AccessToken: accessToken,
