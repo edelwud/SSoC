@@ -14,9 +14,11 @@ type Session interface {
 	UploadStatus() float64
 	DownloadStatus() float64
 
+	GetAddress() net.Addr
+
 	GetOptions() options.Options
-	GetConn() *net.TCPConn
-	SetConn(conn *net.TCPConn)
+	GetConn() net.Conn
+	SetConn(conn net.Conn)
 	GetAccessToken() string
 	SetAccessToken(token string)
 	RegisterUpload(filename string, filepath string) (*File, error)

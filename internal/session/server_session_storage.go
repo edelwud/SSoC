@@ -1,17 +1,16 @@
-package server_session
+package session
 
 import (
-	"SSoC/internal/session"
 	"errors"
 )
 
 // ServerStorage stores clients sessions
 type ServerStorage struct {
-	clients map[string]session.Session
+	clients map[string]Session
 }
 
 // Find searches accessToken in clients map
-func (s ServerStorage) Find(accessToken string) (session.Session, error) {
+func (s ServerStorage) Find(accessToken string) (Session, error) {
 	conn := s.clients[accessToken]
 	if conn == nil {
 		return nil, errors.New("client not found")
@@ -20,7 +19,7 @@ func (s ServerStorage) Find(accessToken string) (session.Session, error) {
 }
 
 // Register saves Session in clients map where key is accessToken
-func (s *ServerStorage) Register(ctx session.Session) {
+func (s *ServerStorage) Register(ctx Session) {
 	s.clients[ctx.GetAccessToken()] = ctx
 }
 
@@ -41,8 +40,8 @@ func (s *ServerStorage) Deregister(accessToken string) error {
 }
 
 // CreateServerSessionStorage creates server session storage
-func CreateServerSessionStorage() session.Storage {
+func CreateServerSessionStorage() Storage {
 	return &ServerStorage{
-		clients: map[string]session.Session{},
+		clients: map[string]Session{},
 	}
 }

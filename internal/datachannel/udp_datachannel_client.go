@@ -5,32 +5,21 @@ import (
 	"SSoC/internal/session"
 	"io"
 	"net"
-	"time"
 )
 
-type TCPDatachannel struct {
-	Conn    *net.TCPConn
+type UDPDatachannelClient struct {
+	Conn    *net.UDPConn
 	Port    string
 	Options options.Options
 }
 
-func (d *TCPDatachannel) Connect() error {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", d.Options.Host+":"+d.Port)
+func (d *UDPDatachannelClient) Connect() error {
+	UDPAddr, err := net.ResolveUDPAddr("udp", d.Options.Host+":"+d.Port)
 	if err != nil {
 		return err
 	}
 
-	d.Conn, err = net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		return err
-	}
-
-	err = d.Conn.SetKeepAlive(d.Options.KeepAlive)
-	if err != nil {
-		return err
-	}
-
-	err = d.Conn.SetKeepAlivePeriod(time.Duration(d.Options.KeepAlivePeriod) * time.Second)
+	d.Conn, err = net.DialUDP("UDP", nil, UDPAddr)
 	if err != nil {
 		return err
 	}
@@ -38,7 +27,7 @@ func (d *TCPDatachannel) Connect() error {
 	return nil
 }
 
-func (d TCPDatachannel) Close() error {
+func (d UDPDatachannelClient) Close() error {
 	err := d.Conn.Close()
 	if err != nil {
 		return err
@@ -47,7 +36,7 @@ func (d TCPDatachannel) Close() error {
 	return nil
 }
 
-func (d TCPDatachannel) Upload(file *session.File) error {
+func (d UDPDatachannelClient) Upload(file *session.File) error {
 	_, err := io.Copy(d.Conn, file)
 	if err != nil {
 		return err
@@ -66,7 +55,7 @@ func (d TCPDatachannel) Upload(file *session.File) error {
 	return nil
 }
 
-func (d TCPDatachannel) Download(file *session.File) error {
+func (d UDPDatachannelClient) Download(file *session.File) error {
 	_, err := io.Copy(file, d.Conn)
 	if err != nil {
 		return err
@@ -85,8 +74,20 @@ func (d TCPDatachannel) Download(file *session.File) error {
 	return nil
 }
 
-func NewTCPDatachannel(port string, ops options.Options) Datachannel {
-	return &TCPDatachannel{
+func (d UDPDatachannelClient) Accept() error {
+	return nil
+}
+
+func (d UDPDatachannelClient) Listen() error {
+	return nil
+}
+
+func (d UDPDatachannelClient) GetPort() string {
+	return d.Port
+}
+
+func NewUDPDatachannelClient(port string, ops options.Options) Datachannel {
+	return &UDPDatachannelClient{
 		Port:    port,
 		Options: ops,
 	}

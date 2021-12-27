@@ -4,24 +4,18 @@ import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
 	"io"
-	"math/rand"
 	"net"
-	"strconv"
 	"time"
 )
 
-type TCPDatachannel struct {
+type TCPDatachannelServer struct {
 	Listener *net.TCPListener
 	Conn     *net.TCPConn
 	Port     string
 	Options  options.Options
 }
 
-func generatePort() string {
-	return strconv.Itoa(int(rand.Float32()*1000) + 8000)
-}
-
-func (d *TCPDatachannel) Listen() error {
+func (d *TCPDatachannelServer) Listen() error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+d.Port)
 	if err != nil {
 		return err
@@ -35,7 +29,7 @@ func (d *TCPDatachannel) Listen() error {
 	return nil
 }
 
-func (d *TCPDatachannel) Accept() error {
+func (d *TCPDatachannelServer) Accept() error {
 	var err error
 
 	d.Conn, err = d.Listener.AcceptTCP()
@@ -56,7 +50,7 @@ func (d *TCPDatachannel) Accept() error {
 	return nil
 }
 
-func (d TCPDatachannel) Close() error {
+func (d TCPDatachannelServer) Close() error {
 	err := d.Listener.Close()
 	if err != nil {
 		return err
@@ -70,11 +64,11 @@ func (d TCPDatachannel) Close() error {
 	return nil
 }
 
-func (d TCPDatachannel) GetPort() string {
+func (d TCPDatachannelServer) GetPort() string {
 	return d.Port
 }
 
-func (d TCPDatachannel) Download(file *session.File) error {
+func (d TCPDatachannelServer) Download(file *session.File) error {
 	_, err := io.Copy(d.Conn, file)
 	if err != nil {
 		return err
@@ -93,7 +87,7 @@ func (d TCPDatachannel) Download(file *session.File) error {
 	return nil
 }
 
-func (d TCPDatachannel) Upload(file *session.File) error {
+func (d TCPDatachannelServer) Upload(file *session.File) error {
 	_, err := io.Copy(file, d.Conn)
 	if err != nil {
 		return err
@@ -112,8 +106,12 @@ func (d TCPDatachannel) Upload(file *session.File) error {
 	return nil
 }
 
-func NewTCPDatachannel(ops options.Options) Datachannel {
-	return &TCPDatachannel{
+func (d TCPDatachannelServer) Connect() error {
+	return nil
+}
+
+func NewTCPDatachannelServer(ops options.Options) Datachannel {
+	return &TCPDatachannelServer{
 		Port:    generatePort(),
 		Options: ops,
 	}
