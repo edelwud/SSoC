@@ -6,6 +6,7 @@ import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 )
@@ -82,33 +83,45 @@ func (s *UDPServer) AcceptLoop() error {
 		buf := make([]byte, CommandBufferSize)
 		n, addr, err := s.Conn.ReadFromUDP(buf)
 		if err != nil {
-			return err
-		}
-
-		sess, err := s.FindClient(addr.String())
-		writer := CreateUDPWriter(addr, s.Conn)
-		if err != nil {
-			err := s.Auth(writer, addr, string(buf[:n]))
+			serverLogger.Warnf("client disconnected")
+			err := s.Run()
 			if err != nil {
 				return err
 			}
-			continue
+			return nil
 		}
 
-		cmd, err := command.ParseCommand(string(buf[:n]))
-		if err != nil {
-			serverLogger.Warnf("sent undefined command")
-			continue
-		}
-
-		err = s.ExecService.Process(writer, sess, cmd)
-		if err != nil {
-			serverLogger.Warnf("command execution error: %s", err)
-			continue
-		}
-
-		serverLogger.Infof("command %s successfully executed", cmd.Cmd)
+		go s.HandleClient(addr, buf[:n])
 	}
+}
+
+func (s UDPServer) HandleClient(addr net.Addr, buf []byte) {
+	fmt.Println(addr.String())
+
+	sess, err := s.FindClient(addr.String())
+	writer := CreateUDPWriter(addr, s.Conn)
+	if err != nil {
+		err := s.Auth(writer, addr, string(buf))
+		if err != nil {
+			serverLogger.Warnf("client disconnected")
+			return
+		}
+		return
+	}
+
+	cmd, err := command.ParseCommand(string(buf))
+	if err != nil {
+		serverLogger.Warnf("sent undefined command")
+		return
+	}
+
+	err = s.ExecService.Process(writer, sess, cmd)
+	if err != nil {
+		serverLogger.Warnf("command execution error: %s", err)
+		return
+	}
+
+	serverLogger.Infof("command %s successfully executed", cmd.Cmd)
 }
 
 func (s UDPServer) FindClient(address string) (session.Session, error) {

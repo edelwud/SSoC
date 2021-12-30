@@ -1,5 +1,5 @@
 protocol: udp
-host:
+host: # 192.168.77.2
 port: 8080
 keepAlive: true
 keepAlivePeriod: 360
