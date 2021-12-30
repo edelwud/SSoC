@@ -3,14 +3,25 @@ package datachannel
 import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
+	"errors"
 	"io"
 	"net"
 )
 
 type UDPDatachannelServer struct {
 	Conn    *net.UDPConn
+	Addr    net.Addr
 	Port    string
 	Options options.Options
+}
+
+func (d UDPDatachannelServer) Write(p []byte) (n int, err error) {
+	n, err = d.Conn.WriteTo(p, d.Addr)
+	if err != nil {
+		return 0, err
+	}
+
+	return n, err
 }
 
 func (d *UDPDatachannelServer) Listen() error {
@@ -28,6 +39,17 @@ func (d *UDPDatachannelServer) Listen() error {
 }
 
 func (d *UDPDatachannelServer) Accept() error {
+	acceptanceBuffer := make([]byte, 1024)
+	n, addr, err := d.Conn.ReadFrom(acceptanceBuffer)
+	if err != nil {
+		return err
+	}
+
+	if string(acceptanceBuffer[:n-1]) != HelloMessage {
+		return errors.New("acceptance message not valid")
+	}
+
+	d.Addr = addr
 	return nil
 }
 
@@ -45,7 +67,7 @@ func (d UDPDatachannelServer) GetPort() string {
 }
 
 func (d UDPDatachannelServer) Download(file *session.File) error {
-	_, err := io.Copy(d.Conn, file)
+	_, err := io.Copy(d, file)
 	if err != nil {
 		return err
 	}

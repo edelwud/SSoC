@@ -2,6 +2,7 @@ package executor
 
 import (
 	"SSoC/internal/session"
+	"io"
 )
 
 // CloseExecutor responsible for executing "CLOSE" command;
@@ -16,7 +17,7 @@ func (e CloseExecutor) CanAccess(accessToken string) bool {
 }
 
 // Process uses session.Storage for closing down client connection
-func (e CloseExecutor) Process(session session.Session, _ ...string) error {
+func (e CloseExecutor) Process(writer io.Writer, session session.Session, _ ...string) error {
 	err := e.ctx.Deregister(session.GetAccessToken())
 	if err != nil {
 		return err

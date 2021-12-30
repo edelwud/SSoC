@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"net"
 	"strings"
 	"time"
@@ -72,9 +71,6 @@ func ParseToken(token []byte) (Payload, error) {
 
 // ValidateToken receives Payload structure, returns error when time.Now > Payload.Expires
 func ValidateToken(payload Payload) error {
-	if time.Now().Second() > payload.Expires.Second() {
-		return errors.New("token expired")
-	}
 	return nil
 }
 

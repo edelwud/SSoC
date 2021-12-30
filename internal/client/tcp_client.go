@@ -1,12 +1,9 @@
-package tcp_client
+package client
 
 import (
-	"SSoC/internal/client"
 	"SSoC/internal/options"
 	"SSoC/internal/requester"
 	"SSoC/internal/session"
-	clientSession "SSoC/internal/session/client_session"
-	"github.com/sirupsen/logrus"
 	"net"
 	"time"
 )
@@ -17,8 +14,6 @@ type TCPClient struct {
 	Session     session.Session
 	Options     options.Options
 }
-
-var clientLogger = logrus.WithField("context", "client")
 
 // Connect resolves server options from Options, dials via net.DialTCP with TCPv4 background,
 // enables/disables keep alive and sets keep alive period from Options, generates and sends access token via Auth
@@ -55,7 +50,7 @@ func (c *TCPClient) Connect() error {
 
 // Auth generates MAC address based access token, creates client session, sends access token to server
 func (c *TCPClient) Auth(conn *net.TCPConn) error {
-	c.Session = clientSession.CreateClientSession(conn, c.Options, c.AccessToken)
+	c.Session = session.CreateClientSession(conn, c.Options, c.AccessToken, conn.RemoteAddr())
 	req := requester.CreateTokenRequester(c.AccessToken)
 
 	err := c.Exec(req)
@@ -117,7 +112,7 @@ func (c TCPClient) GetContext() session.Session {
 }
 
 // CreateTCPClient constructs TCPClient with received Options
-func CreateTCPClient(options options.Options, accessToken string) client.Client {
+func CreateTCPClient(options options.Options, accessToken string) Client {
 	return &TCPClient{
 		Options:     options,
 		AccessToken: accessToken,

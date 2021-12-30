@@ -1,8 +1,9 @@
 package executor
 
 import (
-	"SSoC/internal/server/datachannel"
+	"SSoC/internal/datachannel"
 	"SSoC/internal/session"
+	"io"
 )
 
 // UploadExecutor responsible for executing "UPLOAD <filename>" command
@@ -21,7 +22,7 @@ func (e UploadExecutor) CanAccess(accessToken string) bool {
 
 // Process executes UPLOAD command; receives <filename> from client, registers upload in client session,
 // sends generated port, performs datachannel connection with client, writes file to UploadFolder
-func (e *UploadExecutor) Process(session session.Session, params ...string) error {
+func (e *UploadExecutor) Process(writer io.Writer, session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
@@ -35,13 +36,13 @@ func (e *UploadExecutor) Process(session session.Session, params ...string) erro
 		return err
 	}
 
-	dc := datachannel.NewTCPDatachannel(session.GetOptions())
+	dc := datachannel.New("server", session.GetOptions().Protocol, "", session.GetOptions())
 	err = dc.Listen()
 	if err != nil {
 		return err
 	}
 
-	_, err = session.GetConn().Write([]byte(dc.GetPort() + "\n"))
+	_, err = writer.Write([]byte(dc.GetPort() + "\n"))
 	if err != nil {
 		return err
 	}

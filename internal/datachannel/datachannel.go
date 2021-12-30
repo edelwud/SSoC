@@ -15,6 +15,8 @@ type Datachannel interface {
 	Download(file *session.File) error
 }
 
+const HelloMessage = "HELLO"
+
 var dataChannels = map[string]func(string, string, options.Options) Datachannel{
 	"server": func(protocol, port string, ops options.Options) Datachannel {
 		return NewServer(protocol, ops)

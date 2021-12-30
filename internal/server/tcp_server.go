@@ -1,14 +1,11 @@
-package tcp_server
+package server
 
 import (
 	"SSoC/internal/command"
 	"SSoC/internal/executor"
 	"SSoC/internal/options"
-	"SSoC/internal/server"
 	"SSoC/internal/session"
-	serverSession "SSoC/internal/session/server_session"
 	"bufio"
-	"github.com/sirupsen/logrus"
 	"net"
 	"time"
 )
@@ -20,8 +17,6 @@ type TCPServer struct {
 	Context     session.Storage
 	ExecService executor.Service
 }
-
-var serverLogger = logrus.WithField("context", "server")
 
 // Run resolves server options from Options
 // creates net.Listener with TCPv4 background
@@ -77,7 +72,7 @@ func (s *TCPServer) HandleConnection(conn *net.TCPConn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 
 	accessToken := ""
-	currentSession := serverSession.CreateServerSession(conn, s.Options, accessToken)
+	currentSession := session.CreateServerSession(conn, s.Options, accessToken, conn.RemoteAddr())
 
 	for {
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')
@@ -92,7 +87,7 @@ func (s *TCPServer) HandleConnection(conn *net.TCPConn) {
 			continue
 		}
 
-		err = s.ExecService.Process(currentSession, cmd)
+		err = s.ExecService.Process(conn, currentSession, cmd)
 		if err != nil {
 			connectionLogger.Warnf("command execution error: %s", err)
 			continue
@@ -116,9 +111,23 @@ func (s *TCPServer) Close() error {
 	return nil
 }
 
+func (s TCPServer) Write(payload, token string) error {
+	sess, err := s.Context.Find(token)
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.GetConn().Write([]byte(payload + "\n"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateTCPServer creates TCPServer with initialized session.ServerStorage and executor.ServerExecutorService
-func CreateTCPServer(options options.Options) server.Server {
-	ctx := serverSession.CreateServerSessionStorage()
+func CreateTCPServer(options options.Options) Server {
+	ctx := session.CreateServerSessionStorage()
 	executorService := executor.RegisterServerExecutorService(ctx)
 	return &TCPServer{
 		Options:     options,

@@ -9,7 +9,6 @@ import (
 type Server interface {
 	Run() error
 	Close() error
-	Write(payload, token string) error
 }
 
 var serverLogger = logrus.WithField("context", "server")

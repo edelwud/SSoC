@@ -19,7 +19,12 @@ func (d *UDPDatachannelClient) Connect() error {
 		return err
 	}
 
-	d.Conn, err = net.DialUDP("UDP", nil, UDPAddr)
+	d.Conn, err = net.DialUDP("udp", nil, UDPAddr)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.Conn.Write([]byte(HelloMessage + "\n"))
 	if err != nil {
 		return err
 	}
