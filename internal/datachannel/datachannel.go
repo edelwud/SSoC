@@ -15,7 +15,10 @@ type Datachannel interface {
 	Download(file *session.File) error
 }
 
-const HelloMessage = "HELLO"
+const (
+	HelloMessage = "HELLO"
+	EndOfFile    = uint64(101010)
+)
 
 var dataChannels = map[string]func(string, string, options.Options) Datachannel{
 	"server": func(protocol, port string, ops options.Options) Datachannel {

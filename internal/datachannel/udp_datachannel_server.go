@@ -3,6 +3,8 @@ package datachannel
 import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -13,6 +15,14 @@ type UDPDatachannelServer struct {
 	Addr    net.Addr
 	Port    string
 	Options options.Options
+}
+
+func (d UDPDatachannelServer) Read(p []byte) (n int, err error) {
+	n, _, err = d.Conn.ReadFromUDP(p)
+	if binary.BigEndian.Uint64(p[n-8:n]) == EndOfFile {
+		return 0, io.EOF
+	}
+	return n, err
 }
 
 func (d UDPDatachannelServer) Write(p []byte) (n int, err error) {
@@ -72,6 +82,14 @@ func (d UDPDatachannelServer) Download(file *session.File) error {
 		return err
 	}
 
+	endOfFile := make([]byte, 8)
+	binary.BigEndian.PutUint64(endOfFile, EndOfFile)
+
+	_, err = io.Copy(d, bytes.NewReader(endOfFile))
+	if err != nil {
+		return err
+	}
+
 	err = file.Sync()
 	if err != nil {
 		return err
@@ -86,7 +104,7 @@ func (d UDPDatachannelServer) Download(file *session.File) error {
 }
 
 func (d UDPDatachannelServer) Upload(file *session.File) error {
-	_, err := io.Copy(file, d.Conn)
+	_, err := io.Copy(file, d)
 	if err != nil {
 		return err
 	}
