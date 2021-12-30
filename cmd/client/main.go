@@ -45,13 +45,13 @@ func main() {
 		}
 	}
 
-	tcpClient := InitializeTCPClient(config, accessToken)
-	defer func(tcpClient client.Client) {
-		err := tcpClient.Disconnect()
+	cl := InitializeClient(config, accessToken)
+	defer func(cl client.Client) {
+		err := cl.Disconnect()
 		if err != nil {
 			return
 		}
-	}(tcpClient)
+	}(cl)
 
 	a := app.New()
 	w := a.NewWindow("TCP client")
@@ -59,17 +59,17 @@ func main() {
 	w.SetContent(container.NewVBox(
 		widget.NewButton("Close connection", func() {
 			req := requester.CreateCloseRequester()
-			err := tcpClient.Exec(req)
+			err := cl.Exec(req)
 			if err != nil {
 				topLevelLogger.Fatalf("cannot disconnect from tcp server: %q", err)
 			}
 			os.Exit(0)
 		}),
 		container.NewAppTabs(
-			screens.CreateEchoTab(tcpClient),
-			screens.CreateTimeTab(tcpClient),
-			screens.CreateUploadTab(w, tcpClient),
-			screens.CreateDownloadTab(tcpClient),
+			screens.CreateEchoTab(cl),
+			screens.CreateTimeTab(cl),
+			screens.CreateUploadTab(w, cl),
+			screens.CreateDownloadTab(cl),
 		),
 	))
 	w.Resize(fyne.Size{Width: 550, Height: 400})

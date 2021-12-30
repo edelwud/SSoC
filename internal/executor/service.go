@@ -3,9 +3,10 @@ package executor
 import (
 	"SSoC/internal/command"
 	"SSoC/internal/session"
+	"io"
 )
 
 // Service declares interface for commands processing
 type Service interface {
-	Process(ctx session.Session, cmd command.Command) error
+	Process(writer io.Writer, ctx session.Session, cmd command.Command) error
 }

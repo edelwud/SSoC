@@ -17,14 +17,14 @@ const MaxParametersCount = 100
 
 // ParseCommand parses client command via regex, first parameter is Command.Cmd, next are Command.Parameters
 func ParseCommand(command string) (Command, error) {
-	command = strings.TrimSpace(command) + " "
+	cmd := strings.TrimSpace(command) + " "
 
 	commandMatcher, err := regexp.Compile("(.+?) ")
 	if err != nil {
 		return Command{}, err
 	}
 
-	args := commandMatcher.FindAllString(command, MaxParametersCount)
+	args := commandMatcher.FindAllString(cmd, MaxParametersCount)
 	for i := range args {
 		args[i] = strings.TrimSpace(args[i])
 	}

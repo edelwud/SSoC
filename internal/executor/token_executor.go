@@ -3,6 +3,7 @@ package executor
 import (
 	"SSoC/internal/session"
 	t "SSoC/internal/token"
+	"io"
 )
 
 // TokenExecutor responsible for executing "TOKEN <access token>" command;
@@ -24,7 +25,7 @@ func (e TokenExecutor) CanAccess(_ string) bool {
 
 // Process receives <access token> from client, parses and validates token,
 // deregister previous user with equal token and sets current token for client session
-func (e TokenExecutor) Process(session session.Session, params ...string) error {
+func (e TokenExecutor) Process(writer io.Writer, session session.Session, params ...string) error {
 	token := params[0]
 
 	payload, err := t.ParseToken([]byte(token))
@@ -34,7 +35,7 @@ func (e TokenExecutor) Process(session session.Session, params ...string) error 
 
 	err = t.ValidateToken(payload)
 	if err != nil {
-		_, err = session.GetConn().Write([]byte(FatalResult))
+		_, err = writer.Write([]byte(FatalResult))
 		if err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func (e TokenExecutor) Process(session session.Session, params ...string) error 
 	if _, err := e.ctx.Find(token); err == nil {
 		err := e.ctx.Deregister(token)
 		if err != nil {
-			_, err = session.GetConn().Write([]byte(FatalResult))
+			_, err = writer.Write([]byte(FatalResult))
 			if err != nil {
 				return err
 			}
@@ -54,7 +55,7 @@ func (e TokenExecutor) Process(session session.Session, params ...string) error 
 		}
 	}
 
-	_, err = session.GetConn().Write([]byte(SuccessResult))
+	_, err = writer.Write([]byte(SuccessResult))
 	if err != nil {
 		return err
 	}

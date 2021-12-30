@@ -2,6 +2,7 @@ package executor
 
 import (
 	"SSoC/internal/session"
+	"io"
 	"strings"
 )
 
@@ -17,14 +18,14 @@ func (e RequestDownloadExecutor) CanAccess(accessToken string) bool {
 }
 
 // Process returns user unfinished downloads
-func (e RequestDownloadExecutor) Process(session session.Session, _ ...string) error {
+func (e RequestDownloadExecutor) Process(writer io.Writer, session session.Session, _ ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
 	downloads := s.ReceiveUnfinishedDownloads()
-	_, err = s.GetConn().Write([]byte(strings.Join(downloads, ",") + "\n"))
+	_, err = writer.Write([]byte(strings.Join(downloads, ",") + "\n"))
 	if err != nil {
 		return err
 	}

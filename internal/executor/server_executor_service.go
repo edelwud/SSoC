@@ -4,6 +4,7 @@ import (
 	"SSoC/internal/command"
 	"SSoC/internal/session"
 	"errors"
+	"io"
 )
 
 // ServerExecutorService stores command executors in ServiceSet
@@ -12,7 +13,7 @@ type ServerExecutorService struct {
 }
 
 // Process finds responsible command in ServiceSet, checks client access and executes them
-func (s ServerExecutorService) Process(session session.Session, cmd command.Command) error {
+func (s ServerExecutorService) Process(writer io.Writer, session session.Session, cmd command.Command) error {
 	executor := s.ServiceSet[cmd.Cmd]
 	if executor == nil {
 		return errors.New("unrecognized command")
@@ -22,7 +23,7 @@ func (s ServerExecutorService) Process(session session.Session, cmd command.Comm
 		return errors.New("cannot access to command: " + cmd.Cmd)
 	}
 
-	return executor.Process(session, cmd.Parameters...)
+	return executor.Process(writer, session, cmd.Parameters...)
 }
 
 // RegisterServerExecutorService register ServerExecutorService.ServiceSet with all responsible commands

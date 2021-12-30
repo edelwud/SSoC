@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-type TCPDatachannel struct {
+type TCPDatachannelClient struct {
 	Conn    *net.TCPConn
 	Port    string
 	Options options.Options
 }
 
-func (d *TCPDatachannel) Connect() error {
+func (d *TCPDatachannelClient) Connect() error {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", d.Options.Host+":"+d.Port)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (d *TCPDatachannel) Connect() error {
 	return nil
 }
 
-func (d TCPDatachannel) Close() error {
+func (d TCPDatachannelClient) Close() error {
 	err := d.Conn.Close()
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (d TCPDatachannel) Close() error {
 	return nil
 }
 
-func (d TCPDatachannel) Upload(file *session.File) error {
+func (d TCPDatachannelClient) Upload(file *session.File) error {
 	_, err := io.Copy(d.Conn, file)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (d TCPDatachannel) Upload(file *session.File) error {
 	return nil
 }
 
-func (d TCPDatachannel) Download(file *session.File) error {
+func (d TCPDatachannelClient) Download(file *session.File) error {
 	_, err := io.Copy(file, d.Conn)
 	if err != nil {
 		return err
@@ -85,8 +85,20 @@ func (d TCPDatachannel) Download(file *session.File) error {
 	return nil
 }
 
-func NewTCPDatachannel(port string, ops options.Options) Datachannel {
-	return &TCPDatachannel{
+func (d TCPDatachannelClient) Accept() error {
+	return nil
+}
+
+func (d TCPDatachannelClient) Listen() error {
+	return nil
+}
+
+func (d TCPDatachannelClient) GetPort() string {
+	return d.Port
+}
+
+func NewTCPDatachannelClient(port string, ops options.Options) Datachannel {
+	return &TCPDatachannelClient{
 		Port:    port,
 		Options: ops,
 	}

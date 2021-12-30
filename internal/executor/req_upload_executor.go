@@ -2,6 +2,7 @@ package executor
 
 import (
 	"SSoC/internal/session"
+	"io"
 	"strings"
 )
 
@@ -17,14 +18,14 @@ func (e RequestUploadExecutor) CanAccess(accessToken string) bool {
 }
 
 // Process returns user unfinished uploads
-func (e RequestUploadExecutor) Process(session session.Session, _ ...string) error {
+func (e RequestUploadExecutor) Process(writer io.Writer, session session.Session, _ ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
 	uploads := s.ReceiveUnfinishedUploads()
-	_, err = s.GetConn().Write([]byte(strings.Join(uploads, ",") + "\n"))
+	_, err = writer.Write([]byte(strings.Join(uploads, ",") + "\n"))
 	if err != nil {
 		return err
 	}

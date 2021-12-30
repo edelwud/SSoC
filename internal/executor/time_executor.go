@@ -2,6 +2,7 @@ package executor
 
 import (
 	"SSoC/internal/session"
+	"io"
 	"time"
 )
 
@@ -17,13 +18,13 @@ func (e TimeExecutor) CanAccess(accessToken string) bool {
 }
 
 // Process returns current server time to client
-func (e TimeExecutor) Process(session session.Session, _ ...string) error {
-	s, err := e.ctx.Find(session.GetAccessToken())
+func (e TimeExecutor) Process(writer io.Writer, session session.Session, _ ...string) error {
+	_, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	_, err = s.GetConn().Write([]byte(time.Now().String() + "\n"))
+	_, err = writer.Write([]byte(time.Now().String() + "\n"))
 	if err != nil {
 		return err
 	}

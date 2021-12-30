@@ -3,7 +3,6 @@ package main
 import (
 	c "SSoC/internal/config/server_config"
 	"SSoC/internal/server"
-	tcp "SSoC/internal/server/tcp_server"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +19,7 @@ func main() {
 
 	topLevelLogger.Infof("config loaded: %+v", cfg)
 
-	s := tcp.CreateTCPServer(cfg)
+	s := server.New(cfg.Protocol, cfg)
 	err = s.Run()
 	if err != nil {
 		topLevelLogger.Fatalf("server running error: %s", err)

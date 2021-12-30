@@ -1,6 +1,8 @@
 package requester
 
-import "SSoC/internal/session"
+import (
+	"SSoC/internal/session"
+)
 
 // Requester declares interface for client commands
 type Requester interface {

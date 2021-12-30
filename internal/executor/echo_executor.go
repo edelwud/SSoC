@@ -2,6 +2,7 @@ package executor
 
 import (
 	"SSoC/internal/session"
+	"io"
 	"strings"
 )
 
@@ -17,13 +18,13 @@ func (e EchoExecutor) CanAccess(accessToken string) bool {
 }
 
 // Process writes to current client <client string>
-func (e EchoExecutor) Process(session session.Session, params ...string) error {
-	s, err := e.ctx.Find(session.GetAccessToken())
+func (e EchoExecutor) Process(writer io.Writer, session session.Session, params ...string) error {
+	_, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
 	}
 
-	_, err = s.GetConn().Write([]byte(strings.Join(params, " ") + "\n"))
+	_, err = writer.Write([]byte(strings.Join(params, " ") + "\n"))
 	if err != nil {
 		return err
 	}

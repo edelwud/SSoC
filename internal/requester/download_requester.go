@@ -1,7 +1,7 @@
 package requester
 
 import (
-	"SSoC/internal/client/datachannel"
+	"SSoC/internal/datachannel"
 	"SSoC/internal/session"
 	"bufio"
 	"net"
@@ -48,7 +48,7 @@ func (r DownloadRequester) Process(ctx session.Session) error {
 
 	port, err := r.ReceivePort(ctx.GetConn())
 
-	dc := datachannel.NewTCPDatachannel(port, ctx.GetOptions())
+	dc := datachannel.New("client", ctx.GetOptions().Protocol, port, ctx.GetOptions())
 	err = dc.Connect()
 	if err != nil {
 		return err

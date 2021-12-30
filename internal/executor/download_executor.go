@@ -1,8 +1,9 @@
 package executor
 
 import (
-	"SSoC/internal/server/datachannel"
+	"SSoC/internal/datachannel"
 	"SSoC/internal/session"
+	"io"
 )
 
 // DownloadExecutor responsible for executing "DOWNLOAD <filename>" command
@@ -21,7 +22,7 @@ func (e DownloadExecutor) CanAccess(accessToken string) bool {
 
 // Process executes DOWNLOAD command; receives <filename> from client, registers download in client session,
 // receives datachannel port, uses CreateDatachannel for datachannel initialization
-func (e *DownloadExecutor) Process(session session.Session, params ...string) error {
+func (e *DownloadExecutor) Process(writer io.Writer, session session.Session, params ...string) error {
 	s, err := e.ctx.Find(session.GetAccessToken())
 	if err != nil {
 		return err
@@ -35,13 +36,13 @@ func (e *DownloadExecutor) Process(session session.Session, params ...string) er
 		return err
 	}
 
-	dc := datachannel.NewTCPDatachannel(session.GetOptions())
+	dc := datachannel.New("server", session.GetOptions().Protocol, "", session.GetOptions())
 	err = dc.Listen()
 	if err != nil {
 		return err
 	}
 
-	_, err = session.GetConn().Write([]byte(dc.GetPort() + "\n"))
+	_, err = writer.Write([]byte(dc.GetPort() + "\n"))
 	if err != nil {
 		return err
 	}

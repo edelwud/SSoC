@@ -1,17 +1,17 @@
-package client_session
+package session
 
 import (
 	"SSoC/internal/options"
-	"SSoC/internal/session"
 	"net"
 )
 
 // ClientSession basic storage for client sessions
 type ClientSession struct {
-	Conn        *net.TCPConn
+	Conn        net.Conn
+	Addr        net.Addr
 	AccessToken string
-	Uploads     []*session.File
-	Downloads   []*session.File
+	Uploads     []*File
+	Downloads   []*File
 	Options     options.Options
 }
 
@@ -30,12 +30,12 @@ func (s ClientSession) Release() error {
 }
 
 // GetConn receives connection
-func (s ClientSession) GetConn() *net.TCPConn {
+func (s ClientSession) GetConn() net.Conn {
 	return s.Conn
 }
 
 // SetConn updates connection
-func (s *ClientSession) SetConn(conn *net.TCPConn) {
+func (s *ClientSession) SetConn(conn net.Conn) {
 	s.Conn = conn
 }
 
@@ -59,10 +59,10 @@ func (s ClientSession) FreeUpload(filename string) {
 }
 
 // RegisterUpload initialize a File structure, append it to Uploads storage
-func (s *ClientSession) RegisterUpload(filename string, filepath string) (*session.File, error) {
+func (s *ClientSession) RegisterUpload(filename string, filepath string) (*File, error) {
 	s.FreeUpload(filename)
 
-	upload, err := session.CreateFile(filename, filepath)
+	upload, err := CreateFile(filename, filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func (s *ClientSession) RegisterUpload(filename string, filepath string) (*sessi
 }
 
 // RegisterDownload initialize a File structure, append it to Downloads storage
-func (s *ClientSession) RegisterDownload(filename string, filepath string) (*session.File, error) {
-	file, err := session.CreateFile(filename, filepath)
+func (s *ClientSession) RegisterDownload(filename string, filepath string) (*File, error) {
+	file, err := CreateFile(filename, filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *ClientSession) RegisterDownload(filename string, filepath string) (*ses
 }
 
 // FindUpload finds filename in Uploads slice
-func (s ClientSession) FindUpload(filename string) *session.File {
+func (s ClientSession) FindUpload(filename string) *File {
 	for _, file := range s.Uploads {
 		if file.Filename == filename {
 			return file
@@ -92,7 +92,7 @@ func (s ClientSession) FindUpload(filename string) *session.File {
 }
 
 // FindDownload finds filename in Downloads slice
-func (s ClientSession) FindDownload(filename string) *session.File {
+func (s ClientSession) FindDownload(filename string) *File {
 	for _, file := range s.Downloads {
 		if file.Filename == filename {
 			return file
@@ -157,13 +157,18 @@ func (s ClientSession) ReceiveUnfinishedDownloads() []string {
 	return downloads
 }
 
+func (s ClientSession) GetAddress() net.Addr {
+	return s.Addr
+}
+
 // CreateClientSession creates Session from connection and accessToken
-func CreateClientSession(conn *net.TCPConn, options options.Options, accessToken string) session.Session {
+func CreateClientSession(conn net.Conn, options options.Options, accessToken string, addr net.Addr) Session {
 	return &ClientSession{
+		Addr:        addr,
 		Conn:        conn,
 		AccessToken: accessToken,
-		Uploads:     []*session.File{},
-		Downloads:   []*session.File{},
+		Uploads:     []*File{},
+		Downloads:   []*File{},
 		Options:     options,
 	}
 }
