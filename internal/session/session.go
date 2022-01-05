@@ -14,8 +14,6 @@ type Session interface {
 	UploadStatus() float64
 	DownloadStatus() float64
 
-	GetAddress() net.Addr
-
 	GetOptions() options.Options
 	GetConn() net.Conn
 	SetConn(conn net.Conn)
