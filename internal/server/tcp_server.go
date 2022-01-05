@@ -6,7 +6,9 @@ import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
 	"bufio"
+	"log"
 	"net"
+	"syscall"
 	"time"
 )
 
@@ -18,16 +20,38 @@ type TCPServer struct {
 	ExecService executor.Service
 }
 
+var epoller *epoll
+
+func setLimit() {
+	var rLimit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		panic(err)
+	}
+	rLimit.Cur = rLimit.Max
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		panic(err)
+	}
+
+	log.Printf("set cur limit: %d", rLimit.Cur)
+}
+
 // Run resolves server options from Options
 // creates net.Listener with TCPv4 background
 // executes AcceptLoop
 func (s *TCPServer) Run() error {
+	setLimit()
+
 	addr, err := net.ResolveTCPAddr("tcp", s.Options.Host+":"+s.Options.Port)
 	if err != nil {
 		return err
 	}
 
 	s.Listener, err = net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	epoller, err = MkEpoll()
 	if err != nil {
 		return err
 	}
@@ -46,6 +70,16 @@ func (s *TCPServer) Run() error {
 func (s *TCPServer) AcceptLoop() error {
 	for {
 		conn, err := s.Listener.AcceptTCP()
+		if err != nil {
+			return err
+		}
+
+		err = conn.SetNoDelay(true)
+		if err != nil {
+			return err
+		}
+
+		err = epoller.Add(conn)
 		if err != nil {
 			return err
 		}
@@ -75,25 +109,35 @@ func (s *TCPServer) HandleConnection(conn *net.TCPConn) {
 	currentSession := session.CreateServerSession(conn, s.Options, accessToken)
 
 	for {
-		userCommand, err := bufio.NewReader(conn).ReadString('\n')
+		connections, err := epoller.Wait()
 		if err != nil {
 			connectionLogger.Infof("disconnected, reason: %s", err)
-			return
 		}
 
-		cmd, err := command.ParseCommand(userCommand)
-		if err != nil {
-			connectionLogger.Warnf("sent undefined command")
-			continue
-		}
+		for _, conn := range connections {
+			userCommand, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					continue
+				}
+				connectionLogger.Infof("disconnected, reason: %s", err)
+				return
+			}
 
-		err = s.ExecService.Process(conn, currentSession, cmd)
-		if err != nil {
-			connectionLogger.Warnf("command execution error: %s", err)
-			continue
-		}
+			cmd, err := command.ParseCommand(userCommand)
+			if err != nil {
+				connectionLogger.Warnf("sent undefined command")
+				continue
+			}
 
-		connectionLogger.Infof("command %s successfully executed", cmd.Cmd)
+			err = s.ExecService.Process(conn, currentSession, cmd)
+			if err != nil {
+				connectionLogger.Warnf("command execution error: %s", err)
+				continue
+			}
+
+			connectionLogger.Infof("command %s successfully executed", cmd.Cmd)
+		}
 	}
 }
 

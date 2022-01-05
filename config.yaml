@@ -1,4 +1,4 @@
-protocol: udp
+protocol: tcp
 host:
 port: 8080
 keepAlive: true
