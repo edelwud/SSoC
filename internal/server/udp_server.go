@@ -8,7 +8,7 @@ import (
 	"errors"
 	"io"
 	"net"
-	"reflect"
+	"sync"
 	"syscall"
 )
 
@@ -20,20 +20,18 @@ type UDPServer struct {
 	ExecService executor.Service
 	Clients     map[string]session.Session
 	UDPWriter   *UDPWriter
-	Epoll       int
-	Event       syscall.EpollEvent
-	Events      [MaxEvents]syscall.EpollEvent
 }
 
 type UDPWriter struct {
-	FD       int
-	Sockaddr syscall.Sockaddr
+	Addr net.Addr
+	Conn *net.UDPConn
 }
 
-const (
-	MaxEvents         = 128
-	CommandBufferSize = 1024 * 1024
-	EPOLLET           = 1 << 31
+const CommandBufferSize = 1024 * 1024
+
+var (
+	mutex = &sync.Mutex{}
+	wg    = &sync.WaitGroup{}
 )
 
 // Run resolves server options from Options
@@ -61,24 +59,14 @@ func (s *UDPServer) Run() error {
 		return err
 	}
 
-	s.Epoll, err = syscall.EpollCreate1(0)
-	if err != nil {
-		return err
-	}
-
-	s.Event.Events = syscall.EPOLLIN
-	s.Event.Fd = int32(fd)
-	err = syscall.EpollCtl(s.Epoll, syscall.EPOLL_CTL_ADD, fd, &s.Event)
-	if err != nil {
-		return err
-	}
-
 	serverLogger.Infof("server started on port %s", s.Options.Port)
 
-	err = s.AcceptLoop()
-	if err != nil {
-		return err
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go s.AcceptLoop()
 	}
+
+	wg.Wait()
 
 	return nil
 }
@@ -111,38 +99,26 @@ func (s UDPServer) Auth(writer io.Writer, addr net.Addr, c string) error {
 // AcceptLoop accepts client connection, sets keep alive and keep alive period options from Options, handles connection
 func (s *UDPServer) AcceptLoop() error {
 	for {
-		n, err := syscall.EpollWait(s.Epoll, s.Events[:], -1)
+		mutex.Lock()
+		buf := make([]byte, CommandBufferSize)
+		n, addr, err := s.Conn.ReadFromUDP(buf)
+		mutex.Unlock()
 		if err != nil {
-			serverLogger.Fatalf("epoll wait error: %q", err)
-			return err
-		}
-
-		for i := 0; i < n; i++ {
-			fd := int(s.Events[i].Fd)
-			buf := make([]byte, CommandBufferSize)
-			n, from, err := syscall.Recvfrom(fd, buf, 0)
-			if err != nil {
-				serverLogger.Warnf("client disconnected: %q", err)
-				break
-			}
-
-			v := reflect.ValueOf(from).Elem()
-			addr := v.FieldByName("Addr").Interface().([16]byte)
-			port := v.FieldByName("Port").Interface().(int)
-
-			s.HandleClient(fd, &net.UDPAddr{IP: addr[12:16], Port: port}, from, buf[:n])
+			serverLogger.Warnf("client disconnected")
+			err := s.Run()
 			if err != nil {
 				return err
 			}
+			return nil
 		}
+
+		s.HandleClient(addr, buf[:n])
 	}
 }
 
-func (s UDPServer) HandleClient(fd int, addr net.Addr, to syscall.Sockaddr, buf []byte) {
-	defer syscall.Close(fd)
-
+func (s UDPServer) HandleClient(addr net.Addr, buf []byte) {
 	sess, err := s.FindClient(addr.String())
-	writer := CreateUDPWriter(fd, to)
+	writer := CreateUDPWriter(addr, s.Conn)
 	if err != nil {
 		err := s.Auth(writer, addr, string(buf))
 		if err != nil {
@@ -190,12 +166,7 @@ func (s *UDPServer) Close() error {
 		return nil
 	}
 
-	err := syscall.Close(s.Epoll)
-	if err != nil {
-		return err
-	}
-
-	err = s.Conn.Close()
+	err := s.Conn.Close()
 	if err != nil {
 		return err
 	}
@@ -204,18 +175,18 @@ func (s *UDPServer) Close() error {
 }
 
 func (w UDPWriter) Write(p []byte) (n int, err error) {
-	err = syscall.Sendmsg(w.FD, p, nil, w.Sockaddr, 0)
+	n, err = w.Conn.WriteTo(p, w.Addr)
 	if err != nil {
 		return 0, err
 	}
 
-	return len(p), err
+	return n, err
 }
 
-func CreateUDPWriter(fd int, to syscall.Sockaddr) *UDPWriter {
+func CreateUDPWriter(addr net.Addr, conn *net.UDPConn) *UDPWriter {
 	return &UDPWriter{
-		Sockaddr: to,
-		FD:       fd,
+		Addr: addr,
+		Conn: conn,
 	}
 }
 

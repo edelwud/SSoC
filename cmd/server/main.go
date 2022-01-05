@@ -24,11 +24,4 @@ func main() {
 	if err != nil {
 		topLevelLogger.Fatalf("server running error: %s", err)
 	}
-
-	defer func(s server.Server) {
-		err := s.Close()
-		if err != nil {
-			topLevelLogger.Fatalf("closing server socket error: %s", err)
-		}
-	}(s)
 }
