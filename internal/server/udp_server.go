@@ -6,9 +6,10 @@ import (
 	"SSoC/internal/options"
 	"SSoC/internal/session"
 	"errors"
-	"fmt"
 	"io"
 	"net"
+	"sync"
+	"syscall"
 )
 
 // UDPServer implementation of Server interfaces based on UDP protocol
@@ -28,6 +29,11 @@ type UDPWriter struct {
 
 const CommandBufferSize = 1024 * 1024
 
+var (
+	mutex = &sync.Mutex{}
+	wg    = &sync.WaitGroup{}
+)
+
 // Run resolves server options from Options
 // creates net.Listener with UDPv4 background
 // executes AcceptLoop
@@ -42,12 +48,25 @@ func (s *UDPServer) Run() error {
 		return err
 	}
 
-	serverLogger.Infof("server started on port %s", s.Options.Port)
-
-	err = s.AcceptLoop()
+	file, err := s.Conn.File()
 	if err != nil {
 		return err
 	}
+
+	fd := int(file.Fd())
+	err = syscall.SetNonblock(fd, true)
+	if err != nil {
+		return err
+	}
+
+	serverLogger.Infof("server started on port %s", s.Options.Port)
+
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go s.AcceptLoop()
+	}
+
+	wg.Wait()
 
 	return nil
 }
@@ -62,7 +81,7 @@ func (s UDPServer) Auth(writer io.Writer, addr net.Addr, c string) error {
 		return errors.New("cannot authenticate new client")
 	}
 
-	sess := session.CreateServerSession(s.Conn, s.Options, cmd.Parameters[0], addr)
+	sess := session.CreateServerSession(s.Conn, s.Options, cmd.Parameters[0])
 
 	err = s.AddClient(addr.String(), sess)
 	if err != nil {
@@ -80,8 +99,10 @@ func (s UDPServer) Auth(writer io.Writer, addr net.Addr, c string) error {
 // AcceptLoop accepts client connection, sets keep alive and keep alive period options from Options, handles connection
 func (s *UDPServer) AcceptLoop() error {
 	for {
+		mutex.Lock()
 		buf := make([]byte, CommandBufferSize)
 		n, addr, err := s.Conn.ReadFromUDP(buf)
+		mutex.Unlock()
 		if err != nil {
 			serverLogger.Warnf("client disconnected")
 			err := s.Run()
@@ -91,13 +112,11 @@ func (s *UDPServer) AcceptLoop() error {
 			return nil
 		}
 
-		go s.HandleClient(addr, buf[:n])
+		s.HandleClient(addr, buf[:n])
 	}
 }
 
 func (s UDPServer) HandleClient(addr net.Addr, buf []byte) {
-	fmt.Println(addr.String())
-
 	sess, err := s.FindClient(addr.String())
 	writer := CreateUDPWriter(addr, s.Conn)
 	if err != nil {

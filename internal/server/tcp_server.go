@@ -72,7 +72,7 @@ func (s *TCPServer) HandleConnection(conn *net.TCPConn) {
 	connectionLogger := serverLogger.WithField("client", conn.RemoteAddr())
 
 	accessToken := ""
-	currentSession := session.CreateServerSession(conn, s.Options, accessToken, conn.RemoteAddr())
+	currentSession := session.CreateServerSession(conn, s.Options, accessToken)
 
 	for {
 		userCommand, err := bufio.NewReader(conn).ReadString('\n')

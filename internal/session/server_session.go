@@ -144,14 +144,9 @@ func (s ServerSession) DownloadStatus() float64 {
 	return summary / float64(len(s.Downloads))
 }
 
-func (s ServerSession) GetAddress() net.Addr {
-	return s.Addr
-}
-
 // CreateServerSession creates Session from connection and accessToken
-func CreateServerSession(conn net.Conn, options options.Options, accessToken string, addr net.Addr) Session {
+func CreateServerSession(conn net.Conn, options options.Options, accessToken string) Session {
 	return &ServerSession{
-		Addr:        addr,
 		Conn:        conn,
 		AccessToken: accessToken,
 		Uploads:     []*File{},
