@@ -3,8 +3,9 @@ module SSoC
 go 1.17
 
 require (
-	fyne.io/fyne/v2 v2.1.2
+	fyne.io/fyne/v2 v2.1.4
 	github.com/sirupsen/logrus v1.8.1
+	golang.org/x/sys v0.0.0-20211113001501-0c823b97ae02
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -23,6 +24,5 @@ require (
 	github.com/yuin/goldmark v1.4.0 // indirect
 	golang.org/x/image v0.0.0-20200430140353-33d19683fad8 // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
-	golang.org/x/sys v0.0.0-20211113001501-0c823b97ae02 // indirect
 	golang.org/x/text v0.3.6 // indirect
 )
