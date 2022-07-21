@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	fyne.io/fyne/v2 v2.2.3
-	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
+	github.com/sirupsen/logrus v1.9.0
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	gopkg.in/yaml.v2 v2.4.0
 )
 
